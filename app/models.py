@@ -69,7 +69,7 @@ class Service(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(200))
-    # A Font Awesome icon class, e.g. "fa-solid fa-rings-wedding" — used
+    # A Font Awesome icon class, e.g. "fa-solid fa-ring" — used
     # directly as an HTML class attribute in the templates.
     icon: Mapped[str] = mapped_column(String(100), default="fa-solid fa-star")
     order: Mapped[int] = mapped_column(Integer, default=1)

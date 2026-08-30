@@ -5,18 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Admin Login | GPS Ushering and Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="/static/admin.css">
 </head>
 <body class="login-body">
-  <form class="login-card" method="post" action="/login">
-    <h1>GPS Ushering</h1>
-    <p class="subtitle">Site Administration</p>
-    {% if error %}<p class="error">{{ error }}</p>{% endif %}
-    <label for="username">Username</label>
-    <input type="text" id="username" name="username" required autofocus>
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" required>
-    <button type="submit">Log In</button>
-  </form>
+  <div class="login-card">
+    <div class="login-mark"><span class="logo-mark">G</span></div>
+    <span class="login-eyebrow">Site Administration</span>
+    <h1>GPS Ushering <span class="accent">&amp; Events</span></h1>
+    <p class="subtitle">Sign in to manage bookings, services, gallery and more.</p>
+    <form method="post" action="/login">
+      {% if error %}<p class="error"><i class="fas fa-circle-exclamation"></i> {{ error }}</p>{% endif %}
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" required autofocus autocomplete="username">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password">
+      <button type="submit">Log In</button>
+    </form>
+  </div>
 </body>
 </html>

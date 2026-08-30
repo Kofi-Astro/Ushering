@@ -11,7 +11,7 @@ from .models import FAQItem, GalleryItem, Service, SiteSetting, Testimonial
 SERVICES = [
     dict(
         title="Wedding Ushering",
-        icon="fa-solid fa-rings-wedding",
+        icon="fa-solid fa-ring",
         order=1,
         home_description="Elegant ushers who guide guests, manage seating and keep your ceremony and reception running smoothly.",
         description="Elegant, well-coordinated ushers for your ceremony and reception.",
