@@ -8,5 +8,6 @@
   "address": "Accra, Ghana",
   "facebook_url": "#",
   "instagram_url": "#",
-  "tiktok_url": "#"
+  "tiktok_url": "#",
+  "api_base_url": "https://REPLACE-WITH-RAILWAY-BACKEND-URL"
 }

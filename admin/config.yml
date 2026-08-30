@@ -1,6 +1,12 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: Kofi-Astro/Ushering
   branch: master
+  # The GitHub OAuth proxy that makes this login flow work lives in
+  # backend/app/routers/oauth.py, deployed as part of the same FastAPI
+  # service that runs the booking admin. Update this once that service has
+  # a real public URL (see backend/.env.example for the OAuth app setup).
+  base_url: https://REPLACE-WITH-RAILWAY-BACKEND-URL
 
 media_folder: "images/uploads"
 public_folder: "/images/uploads"

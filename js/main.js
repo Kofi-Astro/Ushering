@@ -111,22 +111,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* Booking / contact form — submits to Netlify Forms (data-netlify="true") via AJAX.
-     Pre-deploy (no Netlify backend yet) the fetch simply fails silently and we still
-     show the success message so the UI can be reviewed before hosting is live. */
+  /* Booking / contact form — posts JSON to the FastAPI backend's /api/bookings
+     endpoint (see /backend). The backend's URL is injected at build time via
+     the <meta name="api-base-url"> tag (from _data/settings.json) since the
+     frontend and backend are deployed as separate services on separate
+     domains. Until that's set to a real deployed URL, the fetch fails
+     silently and we still show the success message so the UI can be
+     reviewed before hosting is live. */
   const bookingForm = document.querySelector('#booking-form');
   if (bookingForm) {
     bookingForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new URLSearchParams(new FormData(bookingForm)).toString();
+      const apiBaseUrl = document.querySelector('meta[name="api-base-url"]')?.content || '';
+      const payload = Object.fromEntries(new FormData(bookingForm).entries());
       try {
-        await fetch('/', {
+        await fetch(`${apiBaseUrl}/api/bookings`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
       } catch (err) {
-        /* no form backend yet — ignore until hosting is connected */
+        /* backend not deployed/configured yet — ignore until it is */
       }
       const successBox = document.querySelector('.form-success');
       if (successBox) {
