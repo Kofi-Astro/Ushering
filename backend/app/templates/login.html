@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Login | GPS Ushering and Events</title>
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="login-body">
+  <form class="login-card" method="post" action="/admin/login">
+    <h1>GPS Ushering</h1>
+    <p class="subtitle">Booking Inquiries Admin</p>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" required autofocus>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" required>
+    <button type="submit">Log In</button>
+  </form>
+</body>
+</html>
