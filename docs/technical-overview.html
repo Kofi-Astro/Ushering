@@ -114,83 +114,93 @@
 <tr><th>Layer</th><th>Choice</th><th>Why</th></tr>
 <tr><td>Language / framework</td><td>Python 3 + FastAPI</td><td>Requested — the maintainer is Python/FastAPI-fluent, not JS</td></tr>
 <tr><td>Templating</td><td>Jinja2 (via Starlette's <code>Jinja2Templates</code>)</td><td>Ships with FastAPI; real template inheritance (<code>{% extends %}</code>/<code>{% block %}</code>)</td></tr>
-<tr><td>Content storage</td><td>Markdown + YAML front matter, read with <code>python-frontmatter</code></td><td>Git-native, diffable, and directly editable by the CMS below</td></tr>
-<tr><td>Content editor</td><td>Decap CMS (static JS app, CDN-loaded)</td><td>Zero-backend git-based CMS; commits straight to this repo</td></tr>
-<tr><td>Database</td><td>SQLAlchemy 2.x ORM — SQLite locally, Postgres in production</td><td>One booking table; no need for anything heavier</td></tr>
-<tr><td>Auth (booking admin)</td><td>Single hardcoded admin user (env vars) + signed cookie session (<code>itsdangerous</code>)</td><td>One internal user (the business owner) — no need for a user table</td></tr>
+<tr><td>Content storage</td><td>Database rows (SQLAlchemy models), edited through the admin panel</td><td>No git/GitHub literacy required for the business owner to manage content</td></tr>
+<tr><td>Database</td><td>SQLAlchemy 2.x ORM — SQLite locally, Postgres in production</td><td>Bookings plus all editable content now live in the same database</td></tr>
+<tr><td>Auth (whole admin panel)</td><td>Single hardcoded admin user (env vars) + signed cookie session (<code>itsdangerous</code>)</td><td>One internal user (the business owner) — no need for a user table</td></tr>
 <tr><td>Server</td><td>uvicorn (ASGI)</td><td>Standard FastAPI runtime</td></tr>
-<tr><td>Client-side JS</td><td>One vanilla file, <code>app/static/js/main.js</code></td><td>Mobile nav, theme toggle, FAQ accordion, gallery filter/lightbox, booking form fetch — no framework, no build step</td></tr>
+<tr><td>Client-side JS</td><td>Vanilla files under <code>app/static/js/</code> — <code>main.js</code> plus <code>location-picker.js</code></td><td>Mobile nav, theme toggle, FAQ accordion, gallery filter/lightbox, booking form fetch, map picker — no framework, no build step</td></tr>
+<tr><td>Maps</td><td>Leaflet + OpenStreetMap tiles + Nominatim reverse geocoding (all free, no API key)</td><td>Avoids requiring the client to set up a billed Google Cloud project just for a map</td></tr>
 </table>
-<p>There is no Node.js, npm, or build step anywhere in this project. Everything — pages, the booking API, and both admin tools — is one FastAPI app, run with <code>uvicorn app.main:app</code>.</p>
+<p>There is no Node.js, npm, or build step anywhere in this project. Everything — every public page, the booking API, and the admin panel — is one FastAPI app, run with <code>uvicorn app.main:app</code>.</p>
 
-<h3>Two distinct "admin" surfaces — don't conflate them</h3>
-<table>
-<tr><th>Path</th><th>What it is</th><th>Auth</th></tr>
-<tr><td><code>/admin</code></td><td>Booking inquiries dashboard (this app's own Jinja2 templates)</td><td>Single admin user, signed cookie (<code>app/security.py</code>)</td></tr>
-<tr><td><code>/content-admin</code></td><td>Decap CMS — edits <code>content/*.md</code> and <code>content/settings.json</code> via git commits</td><td>GitHub OAuth, proxied through <code>app/routers/oauth.py</code></td></tr>
-</table>
+<h3>One admin panel, served as a separate virtual host</h3>
+<p>Bookings and all content management (services, gallery, testimonials, FAQ, site settings) live behind a single login in <code>app/admin/</code> — a self-contained FastAPI app with its own top-level routes (<code>/</code>, <code>/login</code>, <code>/bookings</code>, <code>/services</code>, <code>/gallery</code>, <code>/testimonials</code>, <code>/faq</code>, <code>/settings</code>). It is mounted onto the main app via Starlette's <code>Host()</code> matcher (see <code>app/main.py</code>), keyed to <code>ADMIN_HOSTNAME</code> — <code>admin.localhost</code> locally (resolves to 127.0.0.1 in any modern browser, no <code>/etc/hosts</code> editing needed), a real subdomain (e.g. <code>admin.gpsusheringandevents.com</code>) in production. Because it's a distinct virtual host rather than a path prefix, every admin-side link and redirect is a plain top-level path that resolves correctly on whichever hostname it's reached through — no path-rewriting middleware needed.</p>
+<div class="callout">There used to be a second, separate content-editing surface here (Decap CMS, a git-commit-based CMS at <code>/content-admin</code>, requiring a GitHub OAuth app). It was removed in favor of the single database-backed admin panel above — the business owner wanted full control without needing git/GitHub literacy, and one login covering everything is simpler to operate than two.</div>
 </div>
 
 <div class="page">
 <h2>2. Project Structure</h2>
 <div class="tree">.
 ├── app/
-│   ├── main.py            <span class="c"># FastAPI app assembly: static mounts, routers, DB init</span>
-│   ├── config.py           <span class="c"># pydantic-settings — reads env vars / .env</span>
-│   ├── database.py          <span class="c"># SQLAlchemy engine/session (sqlite:// or postgresql+psycopg://)</span>
-│   ├── models.py            <span class="c"># Booking ORM model + BookingStatus enum</span>
-│   ├── schemas.py           <span class="c"># Pydantic request/response schemas</span>
-│   ├── security.py          <span class="c"># Signed-cookie session helpers for /admin</span>
-│   ├── content.py           <span class="c"># Reads content/*.md + settings.json -> plain dicts</span>
+│   ├── main.py              <span class="c"># Public FastAPI app: static mounts, routers, DB init, Host() mount for admin</span>
+│   ├── config.py             <span class="c"># pydantic-settings — reads env vars / .env</span>
+│   ├── database.py            <span class="c"># SQLAlchemy engine/session (sqlite:// or postgresql+psycopg://)</span>
+│   ├── models.py              <span class="c"># Booking, Service, Testimonial, GalleryItem, FAQItem, SiteSetting</span>
+│   ├── schemas.py             <span class="c"># Pydantic request/response schemas (bookings API)</span>
+│   ├── security.py            <span class="c"># Signed-cookie session helpers, shared by the whole admin panel</span>
+│   ├── content.py             <span class="c"># Reads the DB tables above -> plain dicts for the public templates</span>
+│   ├── seed.py                <span class="c"># One-time seed of the original starter content into an empty DB</span>
 │   ├── routers/
-│   │   ├── pages.py         <span class="c"># Every public page (/, /about.html, ... /book-us.html)</span>
-│   │   ├── bookings.py      <span class="c"># POST /api/bookings (public, honeypot-filtered)</span>
-│   │   ├── admin.py         <span class="c"># /admin login + booking dashboard + status updates</span>
-│   │   └── oauth.py         <span class="c"># GitHub OAuth proxy for the content-admin CMS</span>
+│   │   ├── pages.py           <span class="c"># Every public page (/, /about.html, ... /book-us.html)</span>
+│   │   └── bookings.py        <span class="c"># POST /api/bookings (public, honeypot-filtered)</span>
+│   ├── admin/                 <span class="c"># The whole admin panel, its own FastAPI app (see Section 1)</span>
+│   │   ├── __init__.py         <span class="c"># Builds admin_app, mounts its static/images, includes routers</span>
+│   │   └── routers/
+│   │       ├── auth.py          <span class="c"># /login, /logout</span>
+│   │       ├── home.py          <span class="c"># / — dashboard landing with counts per section</span>
+│   │       ├── bookings.py      <span class="c"># /bookings — list + status updates</span>
+│   │       ├── services.py      <span class="c"># /services — full CRUD</span>
+│   │       ├── gallery.py       <span class="c"># /gallery — full CRUD + image upload</span>
+│   │       ├── testimonials.py  <span class="c"># /testimonials — full CRUD</span>
+│   │       ├── faq.py           <span class="c"># /faq — full CRUD</span>
+│   │       └── settings.py      <span class="c"># /settings — single-row edit form</span>
 │   ├── templates/
-│   │   ├── base.html        <span class="c"># Layout: head, topbar, navbar, footer, WhatsApp float</span>
-│   │   ├── partials/        <span class="c"># topbar.html, navbar.html, footer.html</span>
-│   │   ├── pages/           <span class="c"># index.html, about.html, services.html, ...</span>
-│   │   └── admin/           <span class="c"># login.html, dashboard.html (booking admin only)</span>
+│   │   ├── base.html          <span class="c"># Public layout: head, topbar, navbar, footer, WhatsApp float</span>
+│   │   ├── partials/          <span class="c"># topbar.html, navbar.html, footer.html</span>
+│   │   ├── pages/             <span class="c"># index.html, about.html, services.html, ...</span>
+│   │   └── admin/             <span class="c"># login, home, bookings, and each content type's list/form templates</span>
 │   └── static/
-│       ├── css/style.css    <span class="c"># All styling — CSS vars, light/dark theme tokens</span>
-│       ├── js/main.js       <span class="c"># All client-side interactivity</span>
-│       └── admin.css        <span class="c"># Booking-dashboard-only styling</span>
-├── content/                 <span class="c"># The CMS-editable data, read by app/content.py</span>
-│   ├── settings.json         <span class="c"># Site-wide: contact info, social links, site name</span>
-│   ├── services/*.md         <span class="c"># 9 entries — title, icon, description, highlights</span>
-│   ├── testimonials/*.md     <span class="c"># name, role, rating, quote (markdown body)</span>
-│   ├── gallery/*.md          <span class="c"># label, category, image path</span>
-│   └── faq/*.md              <span class="c"># question (front matter) + answer (markdown body)</span>
-├── content-admin/            <span class="c"># Decap CMS: static index.html + config.yml</span>
-├── images/uploads/            <span class="c"># Photos uploaded through the content-admin land here</span>
-├── docs/                      <span class="c"># Non-technical project docs (this file's siblings)</span>
+│       ├── css/style.css      <span class="c"># All public-site styling — CSS vars, light/dark theme tokens</span>
+│       ├── js/main.js         <span class="c"># All public-site client-side interactivity</span>
+│       ├── js/location-picker.js <span class="c"># Book Us page's Leaflet map picker</span>
+│       └── admin.css          <span class="c"># Admin-panel-only styling</span>
+├── images/uploads/             <span class="c"># Photos uploaded through the Gallery admin section land here</span>
+├── docs/                       <span class="c"># Non-technical project docs (this file's siblings)</span>
 ├── requirements.txt
-├── Procfile                   <span class="c"># `web: uvicorn app.main:app --host 0.0.0.0 --port $PORT`</span>
+├── Procfile                    <span class="c"># `web: uvicorn app.main:app --host 0.0.0.0 --port $PORT`</span>
 └── .env.example</div>
 </div>
 
 <div class="page">
 <h2>3. How a Page Request Actually Resolves</h2>
 <ol>
-  <li>A route in <code>app/routers/pages.py</code> (e.g. <code>GET /services.html</code>) calls <code>content.get_services()</code>, which globs <code>content/services/*.md</code>, parses each with <code>python-frontmatter</code>, converts the Markdown body to HTML (<code>body_html</code>), and sorts by an <code>order</code> field.</li>
-  <li>The route builds a context dict via a shared <code>base_context(request, **extra)</code> helper (also in <code>pages.py</code>), which always injects <code>settings</code> (from <code>content/settings.json</code>) and <code>footer_services</code> (first 4 services, for the footer's link list).</li>
+  <li>A route in <code>app/routers/pages.py</code> (e.g. <code>GET /services.html</code>) calls <code>content.get_services()</code>, which opens a short-lived DB session, queries the <code>services</code> table ordered by its <code>order</code> column, converts each row's <code>highlights</code> text blob into a list (split on newlines), and returns plain dicts.</li>
+  <li>The route builds a context dict via a shared <code>base_context(request, **extra)</code> helper (also in <code>pages.py</code>), which always injects <code>settings</code> (from the <code>site_settings</code> table) and <code>footer_services</code> (first 4 services, for the footer's link list).</li>
   <li><code>templates.TemplateResponse(request, "pages/services.html", context)</code> renders that template, which does <code>{% extends "base.html" %}</code> and fills in <code>{% block content %}</code>.</li>
   <li><code>base.html</code> pulls in the shared <code>partials/topbar.html</code>, <code>navbar.html</code>, <code>footer.html</code>, all reading from the same <code>settings</code> context variable.</li>
 </ol>
-<p>Nothing is pre-built or cached to disk — every request re-reads the content files fresh. For a site this size (a few dozen small Markdown files) this costs single-digit milliseconds and means a content-admin save is live on the very next request, no rebuild step, no cache to bust.</p>
+<p>Nothing is pre-built or cached — every request re-reads the database fresh. An admin panel save (add a testimonial, upload a gallery photo, edit a FAQ answer) is live on the very next public-page request, no rebuild step, no cache to bust. <code>app/seed.py</code> runs once at startup and only inserts the original starter content if a table is completely empty, so it never overwrites anything the business owner has since added or changed.</p>
 
-<h3>content-admin (Decap CMS) auth flow</h3>
-<p><code>content-admin/config.yml</code> configures Decap's <code>github</code> backend pointing <code>base_url</code> at this same FastAPI service. The flow: Decap opens a popup to <code>/auth</code> (redirects to GitHub's OAuth authorize page) → GitHub redirects back to <code>/callback?code=...</code> → <code>app/routers/oauth.py</code> exchanges the code server-side (holding the OAuth app's client secret) → returns a small HTML page that <code>postMessage</code>s the token back to the CMS popup's opener, per Decap's documented external-OAuth-provider handshake.</p>
-<div class="callout">Requires a GitHub OAuth App (<a href="https://github.com/settings/developers">github.com/settings/developers</a>) with its callback URL set to <code>&lt;deployed-url&gt;/callback</code>, and <code>GITHUB_OAUTH_CLIENT_ID</code>/<code>GITHUB_OAUTH_CLIENT_SECRET</code> set in the environment. Not yet configured — <code>content-admin/config.yml</code>'s <code>base_url</code> is still a placeholder.</div>
+<h3>Admin panel auth</h3>
+<p>Single admin user, credentials from <code>ADMIN_USERNAME</code>/<code>ADMIN_PASSWORD</code> env vars, compared with <code>hmac.compare_digest</code>. On success, <code>app/security.py</code> issues an <code>itsdangerous</code>-signed cookie (no server-side session store — the cookie itself is the session, verified by signature + a 12-hour max age on every protected request). The same <code>require_admin</code> dependency guards every route under <code>app/admin/</code> — bookings and all content management alike. <code>COOKIE_SECURE</code> must be <code>false</code> for local <code>http://</code> testing (browsers silently drop a <code>Secure</code> cookie over plain HTTP) and should stay <code>true</code> in production.</p>
 
-<h3>Booking Admin auth</h3>
-<p>Single admin user, credentials from <code>ADMIN_USERNAME</code>/<code>ADMIN_PASSWORD</code> env vars, compared with <code>hmac.compare_digest</code>. On success, <code>app/security.py</code> issues an <code>itsdangerous</code>-signed cookie (no server-side session store — the cookie itself is the session, verified by signature + a 12-hour max age on every protected request). <code>COOKIE_SECURE</code> must be <code>false</code> for local <code>http://</code> testing (browsers silently drop a <code>Secure</code> cookie over plain HTTP) and should stay <code>true</code> in production.</p>
+<h3>The Book Us map picker</h3>
+<p><code>app/static/js/location-picker.js</code> initializes a Leaflet map in <code>#location-picker</code> centered on Accra. Clicking the map or dragging its marker reverse-geocodes the picked coordinates via OpenStreetMap's free Nominatim API and writes the resulting address into the <code>#location</code> input — typing the address directly still works exactly as before, this is purely an assist. No API key, no billing account, and nothing server-side to configure.</p>
+<div class="callout">Nominatim's usage policy asks for an identifying User-Agent or Referer for heavier automated use; browsers can't set a custom User-Agent from JS, but the page's Referer satisfies it for this kind of light, occasional client-side traffic. A site seeing heavy booking-form volume should move this behind a server-side proxy or a paid geocoding provider instead.</div>
 </div>
 
 <div class="page">
 <h2>4. Data Model</h2>
-<p>One table: <code>bookings</code> (<code>app/models.py</code>) — name, phone, email, event_type, event_date, guest_count, location, message, a <code>status</code> enum (new/contacted/confirmed/completed/cancelled), and <code>created_at</code>. <code>POST /api/bookings</code> (<code>app/routers/bookings.py</code>) is public and unauthenticated by design — it's the public booking form's submit endpoint — but drops anything where the <code>bot_field</code> honeypot is filled in without storing or acknowledging it any differently to a bot.</p>
+<table>
+<tr><th>Table</th><th>Holds</th></tr>
+<tr><td><code>bookings</code></td><td>name, phone, email, event_type, event_date, guest_count, location, message, a <code>status</code> enum (new/contacted/confirmed/completed/cancelled), created_at</td></tr>
+<tr><td><code>services</code></td><td>title, icon (Font Awesome class), order, home_description, description, highlights (newline-separated text)</td></tr>
+<tr><td><code>testimonials</code></td><td>name, role, rating, order, quote</td></tr>
+<tr><td><code>gallery_items</code></td><td>label, category, order, image (path under /images/uploads/, or empty)</td></tr>
+<tr><td><code>faq_items</code></td><td>question, order, answer</td></tr>
+<tr><td><code>site_settings</code></td><td>Single row (id=1) — site_name, site_url, tagline, phone_display, whatsapp_number, email, address, facebook/instagram/tiktok URLs</td></tr>
+</table>
+<p><code>POST /api/bookings</code> (<code>app/routers/bookings.py</code>) is public and unauthenticated by design — it's the public booking form's submit endpoint — but drops anything where the <code>bot_field</code> honeypot is filled in without storing or acknowledging it any differently to a bot. Every other table is only ever written to through the admin panel.</p>
 <p><code>app/database.py</code> rewrites a Railway-style <code>postgres://</code> URL to <code>postgresql+psycopg://</code> (psycopg 3) automatically; locally it defaults to <code>sqlite:///./bookings.db</code> with no setup required.</p>
 
 <h2>5. Running It Locally</h2>
@@ -199,18 +209,20 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ADMIN_USERNAME=admin ADMIN_PASSWORD=devpass SECRET_KEY=dev COOKIE_SECURE=false \
   uvicorn app.main:app --reload --port 8000</div>
-<p>Then <code>http://localhost:8000/</code> for the site, <code>/admin</code> (login: admin/devpass) for bookings, <code>/content-admin</code> to preview the CMS shell (login won't work until the GitHub OAuth app is set up).</p>
+<p>Then <code>http://localhost:8000/</code> for the public site, and <code>http://admin.localhost:8000/</code> for the admin panel (login: admin/devpass) — bookings, services, gallery, testimonials, FAQ and settings all live there behind that one login.</p>
 
 <h2>6. Deployment Plan</h2>
-<p><strong>Railway</strong>, one service, running the <code>Procfile</code>'s <code>uvicorn app.main:app --host 0.0.0.0 --port $PORT</code>. Add a Postgres plugin (Railway injects <code>DATABASE_URL</code> automatically). Set the env vars from <code>.env.example</code>: <code>SECRET_KEY</code>, <code>ADMIN_USERNAME</code>/<code>ADMIN_PASSWORD</code>, <code>COOKIE_SECURE=true</code>, <code>GITHUB_OAUTH_CLIENT_ID</code>/<code>SECRET</code>. <strong>Cloudflare</strong> is DNS-only in front of it (or skip it and point the domain straight at Railway).</p>
+<p><strong>Railway</strong>, one service, running the <code>Procfile</code>'s <code>uvicorn app.main:app --host 0.0.0.0 --port $PORT</code>. Add a Postgres plugin (Railway injects <code>DATABASE_URL</code> automatically) — without it, bookings and any admin-panel edits live in a local SQLite file that won't survive a redeploy on Railway's ephemeral filesystem. Set the env vars from <code>.env.example</code>: <code>SECRET_KEY</code>, <code>ADMIN_USERNAME</code>/<code>ADMIN_PASSWORD</code>, <code>COOKIE_SECURE=true</code>, and <code>ADMIN_HOSTNAME</code> set to the real admin subdomain once its DNS is pointed at this service. <strong>Cloudflare</strong> is DNS-only in front of it (or skip it and point the domain straight at Railway).</p>
+<div class="callout warn">Gallery photo uploads (<code>images/uploads/</code>) are also written to local disk. Like SQLite, these won't survive a redeploy on Railway's default ephemeral filesystem — attach a Railway volume mounted at <code>images/uploads/</code>, or move to object storage (e.g. Cloudflare R2), before real photos are uploaded in production.</div>
 
 <h2>7. Known Gaps / Worth Revisiting</h2>
 <ul>
   <li>No automated tests yet — everything so far has been verified manually (curl + Playwright screenshots) rather than with a test suite.</li>
-  <li>No pagination on the booking dashboard — fine at dozens of bookings, will want it eventually.</li>
+  <li>No pagination on the bookings list or any content list — fine at current volumes, will want it eventually.</li>
   <li>No rate limiting on <code>POST /api/bookings</code> beyond the honeypot field.</li>
   <li>Single hardcoded admin user — fine for one business owner, would need real user accounts to support more than one person.</li>
-  <li><code>content-admin</code>'s GitHub OAuth app and Railway URL are both still placeholders (<code>REPLACE-WITH-...</code> in <code>content-admin/config.yml</code> and nothing in <code>.env</code> yet).</li>
+  <li>Gallery photo uploads and SQLite both need Railway's ephemeral-filesystem caveat addressed before going live (see the deployment callout above).</li>
+  <li><code>ADMIN_HOSTNAME</code> still defaults to <code>admin.localhost</code> — needs setting to the real subdomain (with matching DNS) before the admin panel is reachable in production.</li>
 </ul>
 
 <div class="footer-note">

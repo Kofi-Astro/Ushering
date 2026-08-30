@@ -114,19 +114,21 @@
   <li><strong>Gallery</strong> — a filterable photo grid by event type, with a click-to-enlarge view.</li>
   <li><strong>Testimonials</strong> — client quotes and ratings.</li>
   <li><strong>FAQ</strong> — answers to the questions clients ask most.</li>
-  <li><strong>Book Us</strong> — a booking/inquiry form, your contact details, a WhatsApp chat button, and a map of your location.</li>
+  <li><strong>Book Us</strong> — a booking/inquiry form, your contact details, a WhatsApp chat button, and an interactive map guests can click or drag a pin on to set their event venue, which fills in the location field automatically.</li>
 </ul>
 
 <div class="callout">
 Every page currently uses <strong>placeholder details</strong> (a sample phone number, email, address, and photo icons instead of real pictures) so the design could move forward without waiting. Section 3 lists exactly what needs to replace these before the site goes live.
 </div>
 
-<h3>Two admin tools, for two different jobs</h3>
-<p>Beyond the public pages, two private tools were built so you can manage the site yourself once it's live, without needing a developer for routine updates:</p>
+<h3>One admin panel, for everything</h3>
+<p>Beyond the public pages, a single private admin panel was built so you can manage the site yourself once it's live, without needing a developer for routine updates. It lives on its own web address (e.g. <em>admin.gpsusheringandevents.com</em>) separate from the main site, behind one login, and covers:</p>
 <ul>
-  <li><strong>Content Admin</strong> (at <em>/content-admin</em> on the website) — a simple form-based editor for your services, gallery photos, testimonials, FAQ answers, and contact details. Every change you save updates the live site automatically within a minute or two.</li>
-  <li><strong>Booking Admin</strong> (at <em>/admin</em>, a private dashboard) — every booking request submitted through the Book Us form lands here. You can see each enquiry's details and mark it as New, Contacted, Confirmed, Completed, or Cancelled, so nothing gets lost in email or WhatsApp chats.</li>
+  <li><strong>Bookings</strong> — every request submitted through the Book Us form lands here. You can see each enquiry's details and mark it as New, Contacted, Confirmed, Completed, or Cancelled, so nothing gets lost in email or WhatsApp chats.</li>
+  <li><strong>Services, Gallery, Testimonials &amp; FAQ</strong> — add, edit, or remove entries through simple forms, including uploading real photos straight from your phone or computer.</li>
+  <li><strong>Site Settings</strong> — your phone number, email, address, and social media links, all in one place, updating everywhere on the site the moment you save.</li>
 </ul>
+<p>Nothing here requires git, GitHub, or any technical know-how — it works like any ordinary website login and form.</p>
 </div>
 
 <div class="page">
@@ -137,14 +139,14 @@ Every page currently uses <strong>placeholder details</strong> (a sample phone n
 <tr><th>Item</th><th>Why it's needed</th><th>Status</th></tr>
 <tr><td>Real phone / WhatsApp number</td><td>Used for calls, the WhatsApp chat button, and the booking form</td><td><span class="badge needed">Needed</span></td></tr>
 <tr><td>Business email address</td><td>Shown on every page and used for the "mailto" contact link</td><td><span class="badge needed">Needed</span></td></tr>
-<tr><td>Exact business address / location</td><td>Powers the Google Map on the Book Us page and local SEO</td><td><span class="badge needed">Needed</span></td></tr>
+<tr><td>Exact business address / location</td><td>Shown on the Book Us page's contact details and used for local SEO</td><td><span class="badge needed">Needed</span></td></tr>
 <tr><td>Logo file (if you'd like your existing logo used)</td><td>Currently a styled "G" monogram stands in for it</td><td><span class="badge needed">Needed</span></td></tr>
 <tr><td>Real event photos and videos</td><td>Replaces the gallery's placeholder tiles</td><td><span class="badge needed">Needed</span></td></tr>
 <tr><td>Facebook / Instagram / TikTok links</td><td>Currently placeholder links in the header and footer</td><td><span class="badge needed">Needed</span></td></tr>
 <tr><td>Final domain name choice</td><td>See Section 3 for suggestions</td><td><span class="badge needed">Needed</span></td></tr>
 </table>
 
-<p>Once these are in hand, they can be added directly through the Content Admin tool — no need to send them to a developer to edit code.</p>
+<p>Once these are in hand, they can be added directly through the admin panel — no need to send them to a developer to edit code.</p>
 </div>
 
 <div class="page">
@@ -153,7 +155,7 @@ Every page currently uses <strong>placeholder details</strong> (a sample phone n
 
 <h3>Hosting</h3>
 <ul>
-  <li><strong>Railway</strong> — hosts the entire site: every public page, the Book Us form, the Content Admin, and the Booking Admin all run as one service. Railway has a free/low-cost tier well suited to a site this size.</li>
+  <li><strong>Railway</strong> — hosts the entire site: every public page, the Book Us form, and the admin panel all run as one service. Railway has a free/low-cost tier well suited to a site this size.</li>
   <li><strong>Cloudflare</strong> — used for the domain's DNS (and its free security/performance benefits), pointing at the Railway service.</li>
 </ul>
 <p>Keeping everything as one service keeps things simple to run and maintain, while still giving a real, dedicated place to manage booking enquiries — rather than them only existing as emails or WhatsApp messages that can get buried.</p>
@@ -174,12 +176,12 @@ Every page currently uses <strong>placeholder details</strong> (a sample phone n
 <h3>Day-to-day content updates</h3>
 <p>Once live, updating the site does not require touching any code:</p>
 <ul>
-  <li>Add or edit a service, gallery photo, testimonial, or FAQ answer through the Content Admin form editor.</li>
+  <li>Add or edit a service, gallery photo, testimonial, or FAQ answer through the admin panel's forms.</li>
   <li>Update your phone number, email, address, or social media links in one place, and they update everywhere on the site automatically.</li>
 </ul>
 
 <h3>Handling booking enquiries</h3>
-<p>Every submission through the Book Us form appears in the Booking Admin dashboard, protected by a private login. From there, each enquiry can be marked New, Contacted, Confirmed, Completed, or Cancelled — giving a clear running list of who has reached out and where things stand with each one.</p>
+<p>Every submission through the Book Us form appears in the admin panel's Bookings section, protected by the same private login. From there, each enquiry can be marked New, Contacted, Confirmed, Completed, or Cancelled — giving a clear running list of who has reached out and where things stand with each one.</p>
 
 <h3>Ongoing support</h3>
 <p>Occasional updates, troubleshooting, or new features can continue to be handled on request — there's no obligation for anything beyond what's needed at the time.</p>
