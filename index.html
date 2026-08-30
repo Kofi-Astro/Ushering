@@ -1,0 +1,150 @@
+---
+layout: layout.njk
+nav: home
+title: GPS Ushering and Events | Professional Ushers in Accra, Ghana
+description: GPS Ushering and Events provides professional ushering and event support services across Ghana — weddings, corporate events, funerals, conferences, birthdays and concerts. Book trusted, elegant ushers today.
+keywords: ushering services in Ghana, professional ushers in Accra, event ushers Ghana, corporate ushering services, wedding ushers in Accra
+schema: >
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "GPS Ushering and Events",
+    "description": "Professional ushering and event support services for weddings, corporate events, funerals, conferences and special occasions across Ghana.",
+    "areaServed": "Ghana",
+    "address": { "@type": "PostalAddress", "addressLocality": "Accra", "addressRegion": "Greater Accra", "addressCountry": "GH" },
+    "telephone": "+233240000000",
+    "url": "https://www.gpsusheringandevents.com/",
+    "sameAs": ["https://facebook.com/", "https://instagram.com/"]
+  }
+---
+<section class="hero">
+  <div class="container">
+    <span class="hero-eyebrow">Ushering &amp; Event Support Services</span>
+    <h1>Elegant, Reliable Ushering for Your Most Important Events</h1>
+    <p class="lead">GPS Ushering and Events delivers polished guest coordination, hospitality and registration support for weddings, corporate events, funerals, conferences, birthdays, concerts and special occasions across Ghana.</p>
+    <div class="hero-buttons">
+      <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+      <a href="/services.html" class="btn btn-outline">View Our Services</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">500+</div>
+        <div class="stat-label">Events Covered</div>
+      </div>
+      <div>
+        <div class="stat-num">100+</div>
+        <div class="stat-label">Trained Ushers</div>
+      </div>
+      <div>
+        <div class="stat-num">10+</div>
+        <div class="stat-label">Regions Served</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container split">
+    <div class="split-media">
+      <div class="media-frame"><i class="fas fa-images"></i><span class="frame-note">Photo of our ushering team — to be added</span></div>
+      <div class="media-accent"></div>
+    </div>
+    <div class="split-body">
+      <span class="eyebrow">Who We Are</span>
+      <h2>Professionalism, Elegance &amp; Excellent Customer Service</h2>
+      <p>GPS Ushering and Events is a Ghana-based ushering and event support company trusted by event planners, corporate organizations, couples, funeral organizers, schools, churches and brands. We ensure every guest feels welcomed, informed and taken care of, from arrival to departure.</p>
+      <ul class="checklist">
+        <li><i class="fas fa-circle-check"></i> Smooth guest coordination and crowd management</li>
+        <li><i class="fas fa-circle-check"></i> Warm, professional hospitality at every touchpoint</li>
+        <li><i class="fas fa-circle-check"></i> Efficient registration and check-in assistance</li>
+        <li><i class="fas fa-circle-check"></i> Trained, uniformed and well-presented staff</li>
+      </ul>
+      <a href="/about.html" class="btn btn-wine mt-40">More About Us</a>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">What We Offer</span>
+      <h2>Our Services</h2>
+      <p>From intimate ceremonies to large-scale conferences, our team is trained to handle every type of event with grace and precision.</p>
+    </div>
+    <div class="cards-grid">
+      {% for service in collections.services %}
+      {% if loop.index <= 6 %}
+      <div class="service-card">
+        <div class="service-icon"><i class="{{ service.data.icon }}"></i></div>
+        <h3>{{ service.data.title }}</h3>
+        <p>{{ service.data.homeDescription }}</p>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="text-center mt-40">
+      <a href="/services.html" class="btn btn-outline-dark">See All Services</a>
+    </div>
+  </div>
+</section>
+
+<section class="section-dark">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Our Gallery</span>
+      <h2>Moments From Our Events</h2>
+      <p>A glimpse of the weddings, corporate events and celebrations our team has proudly supported.</p>
+    </div>
+    <div class="gallery-grid">
+      {% for item in collections.galleryItems %}
+      {% if loop.index <= 3 %}
+      <div class="gallery-item" data-label="{{ item.data.label }}"><i class="fas fa-image"></i></div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="text-center mt-40">
+      <a href="/gallery.html" class="btn btn-gold">View Full Gallery</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Client Love</span>
+      <h2>What Our Clients Say</h2>
+    </div>
+    <div class="testi-track">
+      {% for t in collections.testimonials %}
+      {% if loop.index <= 3 %}
+      <div class="testi-card">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars">
+          {% for i in range(0, t.data.rating) %}<i class="fas fa-star"></i>{% endfor %}
+        </div>
+        {{ t.templateContent | safe }}
+        <div class="testi-author">
+          <div class="testi-avatar">{{ t.data.name | first }}</div>
+          <div><div class="name">{{ t.data.name }}</div><div class="role">{{ t.data.role }}</div></div>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="cta-banner">
+      <div>
+        <h2>Ready to Plan Your Next Event?</h2>
+        <p>Let our professional ushers take care of your guests while you focus on what matters most.</p>
+      </div>
+      <div class="hero-buttons" style="margin-top:0;">
+        <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+        <a href="https://wa.me/{{ settings.whatsapp_number }}" class="btn btn-outline" target="_blank" rel="noopener">Chat on WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
