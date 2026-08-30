@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero page-hero">
+  <div class="container">
+    <span class="hero-eyebrow">Gallery</span>
+    <h1>Moments From Events We've Proudly Supported</h1>
+    <p class="breadcrumb"><a href="/">Home</a> / Gallery</p>
+  </div>
+</section>
+
+<!--
+  Each gallery entry lives in content/gallery/*.md and can be managed from
+  /content-admin. Once a real photo is uploaded through the CMS, `image` will
+  hold a path under /images/uploads/ and render as a real photo below instead
+  of the placeholder icon tile.
+-->
+<section>
+  <div class="container">
+    <div class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="weddings">Weddings</button>
+      <button class="filter-btn" data-filter="corporate">Corporate</button>
+      <button class="filter-btn" data-filter="funerals">Funerals</button>
+      <button class="filter-btn" data-filter="conferences">Conferences</button>
+      <button class="filter-btn" data-filter="parties">Birthdays &amp; Parties</button>
+    </div>
+
+    <div class="gallery-grid">
+      {% for item in gallery_items %}
+      <div class="gallery-item" data-category="{{ item.category }}" data-label="{{ item.label }}">
+        {% if item.image %}
+        <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+        {% else %}
+        <i class="fas fa-image"></i>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="cta-banner">
+      <div>
+        <h2>Want Photos Like These From Your Event?</h2>
+        <p>Book our team and let us help create a memorable, well-run experience for your guests.</p>
+      </div>
+      <div class="hero-buttons" style="margin-top:0;">
+        <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

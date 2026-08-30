@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero page-hero">
+  <div class="container">
+    <span class="hero-eyebrow">FAQ</span>
+    <h1>Frequently Asked Questions</h1>
+    <p class="breadcrumb"><a href="/">Home</a> / FAQ</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="faq-list">
+      {% for item in faqs %}
+      <div class="faq-item">
+        <button class="faq-question">{{ item.question }} <i class="fas fa-plus"></i></button>
+        <div class="faq-answer">
+          {{ item.body_html | safe }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="cta-banner">
+      <div>
+        <h2>Still Have Questions?</h2>
+        <p>Reach out and we'll be happy to help you plan your event.</p>
+      </div>
+      <div class="hero-buttons" style="margin-top:0;">
+        <a href="/book-us.html" class="btn btn-gold">Contact Us</a>
+        <a href="https://wa.me/{{ settings.whatsapp_number }}" class="btn btn-outline-dark" target="_blank" rel="noopener">Chat on WhatsApp</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

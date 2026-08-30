@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero page-hero">
+  <div class="container">
+    <span class="hero-eyebrow">Our Services</span>
+    <h1>Ushering &amp; Event Support for Every Occasion</h1>
+    <p class="breadcrumb"><a href="/">Home</a> / Services</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="cards-grid">
+      {% for service in services %}
+      <div class="service-card">
+        <div class="service-icon"><i class="{{ service.icon }}"></i></div>
+        <h3>{{ service.title }}</h3>
+        <p>{{ service.description }}</p>
+        {% if service.highlights %}
+        <ul>
+          {% for point in service.highlights %}
+          <li>{{ point }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">How It Works</span>
+      <h2>Booking Us Is Simple</h2>
+    </div>
+    <div class="process-grid">
+      <div class="process-step">
+        <div class="step-num">1</div>
+        <h3>Inquire</h3>
+        <p>Reach out via our booking form, call or WhatsApp with your event details.</p>
+      </div>
+      <div class="process-step">
+        <div class="step-num">2</div>
+        <h3>Consult</h3>
+        <p>We discuss your event, guest count and specific needs to plan the right team.</p>
+      </div>
+      <div class="process-step">
+        <div class="step-num">3</div>
+        <h3>Confirm</h3>
+        <p>We agree on scope, staffing and schedule, then confirm your booking.</p>
+      </div>
+      <div class="process-step">
+        <div class="step-num">4</div>
+        <h3>Deliver</h3>
+        <p>Our trained ushers arrive early and deliver a smooth, professional event.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="cta-banner">
+      <div>
+        <h2>Not Sure Which Service You Need?</h2>
+        <p>Tell us about your event and we'll recommend the right package for you.</p>
+      </div>
+      <div class="hero-buttons" style="margin-top:0;">
+        <a href="/book-us.html" class="btn btn-gold">Get In Touch</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

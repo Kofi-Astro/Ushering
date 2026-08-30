@@ -73,6 +73,7 @@
   .callout.urgent { border-left-color: #6d0e23; }
 
   table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 12px; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e8e2d5; vertical-align: top; }
   th { background: #0f0f0f; color: #c9a227; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
   tr:nth-child(even) td { background: #faf7f2; }
@@ -123,8 +124,8 @@ Every page currently uses <strong>placeholder details</strong> (a sample phone n
 <h3>Two admin tools, for two different jobs</h3>
 <p>Beyond the public pages, two private tools were built so you can manage the site yourself once it's live, without needing a developer for routine updates:</p>
 <ul>
-  <li><strong>Content Admin</strong> (at <em>/admin</em> on the website) — a simple form-based editor for your services, gallery photos, testimonials, FAQ answers, and contact details. Every change you save updates the live site automatically within a minute or two.</li>
-  <li><strong>Booking Admin</strong> (a separate private dashboard) — every booking request submitted through the Book Us form lands here. You can see each enquiry's details and mark it as New, Contacted, Confirmed, Completed, or Cancelled, so nothing gets lost in email or WhatsApp chats.</li>
+  <li><strong>Content Admin</strong> (at <em>/content-admin</em> on the website) — a simple form-based editor for your services, gallery photos, testimonials, FAQ answers, and contact details. Every change you save updates the live site automatically within a minute or two.</li>
+  <li><strong>Booking Admin</strong> (at <em>/admin</em>, a private dashboard) — every booking request submitted through the Book Us form lands here. You can see each enquiry's details and mark it as New, Contacted, Confirmed, Completed, or Cancelled, so nothing gets lost in email or WhatsApp chats.</li>
 </ul>
 </div>
 
@@ -152,10 +153,10 @@ Every page currently uses <strong>placeholder details</strong> (a sample phone n
 
 <h3>Hosting</h3>
 <ul>
-  <li><strong>Cloudflare Pages</strong> — hosts the public website itself. It's fast, free for a site this size, and works well alongside Cloudflare's other services.</li>
-  <li><strong>Railway</strong> — hosts the small booking-management system behind the scenes (where booking requests are stored and reviewed in the Booking Admin dashboard).</li>
+  <li><strong>Railway</strong> — hosts the entire site: every public page, the Book Us form, the Content Admin, and the Booking Admin all run as one service. Railway has a free/low-cost tier well suited to a site this size.</li>
+  <li><strong>Cloudflare</strong> — used for the domain's DNS (and its free security/performance benefits), pointing at the Railway service.</li>
 </ul>
-<p>This combination was chosen instead of a single all-in-one host because it keeps costs low (both have generous free tiers for a site this size) while giving a real, dedicated place to manage booking enquiries — rather than them only existing as emails or WhatsApp messages that can get buried.</p>
+<p>Keeping everything as one service keeps things simple to run and maintain, while still giving a real, dedicated place to manage booking enquiries — rather than them only existing as emails or WhatsApp messages that can get buried.</p>
 
 <h3>Domain Name Suggestions</h3>
 <p>A domain still needs to be purchased and its availability confirmed at the time of registration (domain availability changes constantly, so please double-check before purchasing):</p>

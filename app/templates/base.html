@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    var stored = localStorage.getItem('theme');
+    var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+{% if keywords %}<meta name="keywords" content="{{ keywords }}">{% endif %}
+<link rel="canonical" href="{{ settings.site_url }}{{ request.url.path }}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ settings.site_url }}{{ request.url.path }}">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230f0f0f'/%3E%3Ctext x='32' y='42' font-family='Georgia,serif' font-size='30' font-weight='700' fill='%23c9a227' text-anchor='middle'%3EG%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="/css/style.css">
+{% if schema_json %}
+<script type="application/ld+json">{{ schema_json | safe }}</script>
+{% endif %}
+</head>
+<body>
+
+{% include "partials/topbar.html" %}
+{% include "partials/navbar.html" %}
+
+<main>
+{% block content %}{% endblock %}
+</main>
+
+{% include "partials/footer.html" %}
+
+<a class="whatsapp-float" href="https://wa.me/{{ settings.whatsapp_number }}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<button class="back-to-top" aria-label="Back to top"><i class="fas fa-arrow-up"></i></button>
+
+{% if lightbox %}
+<div class="lightbox">
+  <button class="lightbox-close" aria-label="Close"><i class="fas fa-xmark"></i></button>
+  <div class="lightbox-box"><i class="fas fa-image"></i></div>
+  <div class="lightbox-caption"></div>
+</div>
+{% endif %}
+
+<script src="/js/main.js"></script>
+</body>
+</html>

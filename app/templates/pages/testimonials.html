@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero page-hero">
+  <div class="container">
+    <span class="hero-eyebrow">Testimonials</span>
+    <h1>What Our Clients Say About Us</h1>
+    <p class="breadcrumb"><a href="/">Home</a> / Testimonials</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="testi-track">
+      {% for t in testimonials %}
+      <div class="testi-card">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars">
+          {% for i in range(t.rating) %}<i class="fas fa-star"></i>{% endfor %}
+        </div>
+        {{ t.body_html | safe }}
+        <div class="testi-author">
+          <div class="testi-avatar">{{ t.name | first }}</div>
+          <div><div class="name">{{ t.name }}</div><div class="role">{{ t.role }}</div></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="cta-banner">
+      <div>
+        <h2>Ready to Become Our Next Happy Client?</h2>
+        <p>Let's give your guests the same experience.</p>
+      </div>
+      <div class="hero-buttons" style="margin-top:0;">
+        <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
