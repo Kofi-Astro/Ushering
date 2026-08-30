@@ -1,6 +1,29 @@
 // GPS Ushering and Events — shared site behaviour
 
 document.addEventListener('DOMContentLoaded', () => {
+  /* Light / dark theme toggle. The initial theme is set synchronously in
+     <head> (see layout.njk) to avoid a flash of the wrong theme; this just
+     wires up the click handler and keeps the icon in sync. */
+  const themeToggle = document.querySelector('.theme-toggle');
+  if (themeToggle) {
+    const icon = themeToggle.querySelector('i');
+    const setIcon = (theme) => {
+      if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    };
+    setIcon(document.documentElement.getAttribute('data-theme') || 'light');
+    themeToggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      setIcon(next);
+      try {
+        localStorage.setItem('theme', next);
+      } catch (e) {
+        /* private browsing / storage blocked — theme just won't persist */
+      }
+    });
+  }
+
   /* Mobile nav toggle */
   const navToggle = document.querySelector('.nav-toggle');
   const navLinks = document.querySelector('.nav-links');
