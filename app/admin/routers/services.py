@@ -1,3 +1,13 @@
+"""The admin panel's Services section — full CRUD (list, create, edit,
+delete) for the Service table.
+
+This is the "template" CRUD router — testimonials.py, gallery.py and
+faq.py all follow this exact same 5-route shape (list / new form / create
+/ edit form+update / delete), just with different fields. If you're
+reading one of those and something's unclear, this file has the fullest
+comments.
+"""
+
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -15,6 +25,8 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / 
 
 @router.get("")
 def list_services(request: Request, db: Session = Depends(get_db)):
+    """The /services landing page: every service, in display order, each
+    with Edit/Delete buttons and an "Add Service" link to /services/new."""
     services = db.query(Service).order_by(Service.order).all()
     return templates.TemplateResponse(
         request, "admin/services_list.html", {"title": "Services", "active": "services", "services": services}
@@ -23,6 +35,9 @@ def list_services(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/new")
 def new_service_form(request: Request):
+    """Blank version of the same form template used for editing —
+    `service=None` in the context tells admin/service_form.html to show
+    empty fields and POST to /services/new instead of an edit URL."""
     return templates.TemplateResponse(
         request, "admin/service_form.html", {"title": "Add Service", "active": "services", "service": None}
     )
@@ -38,6 +53,9 @@ def create_service(
     highlights: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    """Handles the "Add Service" form submit. FastAPI parses each Form(...)
+    parameter straight out of the multipart/urlencoded form body — no
+    manual request.form() parsing needed."""
     service = Service(
         title=title,
         icon=icon,
@@ -53,6 +71,9 @@ def create_service(
 
 @router.get("/{service_id}/edit")
 def edit_service_form(service_id: int, request: Request, db: Session = Depends(get_db)):
+    """Same template as new_service_form, but pre-filled: `service` here
+    is the actual row, not None, so the form fields show its current
+    values and POST to /services/{id}/edit instead of /services/new."""
     service = db.query(Service).filter(Service.id == service_id).first()
     return templates.TemplateResponse(
         request, "admin/service_form.html", {"title": "Edit Service", "active": "services", "service": service}
@@ -70,6 +91,8 @@ def update_service(
     highlights: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    """Handles the edit form's submit. Silently does nothing if the id
+    doesn't exist (shouldn't happen in normal use through the UI)."""
     service = db.query(Service).filter(Service.id == service_id).first()
     if service:
         service.title = title
@@ -84,6 +107,8 @@ def update_service(
 
 @router.post("/{service_id}/delete")
 def delete_service(service_id: int, db: Session = Depends(get_db)):
+    """Handles the Delete button on the services list (which confirms via
+    a JS `confirm()` dialog before submitting — see admin/services_list.html)."""
     service = db.query(Service).filter(Service.id == service_id).first()
     if service:
         db.delete(service)

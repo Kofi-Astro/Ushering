@@ -5,6 +5,17 @@ now (see app/models.py) and is edited through the admin panel at
 just the shape-conversion layer between the DB rows and what the public
 page templates expect (kept stable so app/routers/pages.py and the
 templates under app/templates/pages/ didn't need to change).
+
+Every function here opens its own short-lived session (`with
+SessionLocal() as db:`) and returns plain dicts/lists rather than
+SQLAlchemy objects — these run outside of any FastAPI request dependency,
+so there's no `Depends(get_db)` session to reuse, and plain dicts are
+simplest for Jinja2 templates to consume (`{{ service.title }}` works on
+a dict the same way it would on an object's attribute).
+
+Nothing here is cached: every call re-queries the database, so an edit
+made through the admin panel is visible on the very next public page
+request with no cache to invalidate.
 """
 
 import markdown as md
@@ -14,6 +25,9 @@ from .models import FAQItem, GalleryItem, Service, SiteSetting, Testimonial
 
 
 def get_services() -> list[dict]:
+    """All services, ordered for display. Used in full on the Services
+    page; the Home page route slices this down to the first 6 itself
+    (see app/routers/pages.py:home)."""
     with SessionLocal() as db:
         rows = db.query(Service).order_by(Service.order).all()
         return [
@@ -22,8 +36,13 @@ def get_services() -> list[dict]:
                 "title": s.title,
                 "icon": s.icon,
                 "order": s.order,
+                # Renamed from the DB column home_description to match
+                # what templates/pages/index.html expects.
                 "homeDescription": s.home_description,
                 "description": s.description,
+                # DB stores highlights as one newline-separated blob (see
+                # app/models.py:Service.highlights); split it back into a
+                # list of non-empty lines for the template's {% for %} loop.
                 "highlights": [line.strip() for line in s.highlights.splitlines() if line.strip()],
             }
             for s in rows
@@ -31,6 +50,8 @@ def get_services() -> list[dict]:
 
 
 def get_testimonials() -> list[dict]:
+    """All testimonials, ordered for display. Home page shows the first 3;
+    the Testimonials page shows all of them."""
     with SessionLocal() as db:
         rows = db.query(Testimonial).order_by(Testimonial.order).all()
         return [
@@ -40,6 +61,9 @@ def get_testimonials() -> list[dict]:
                 "role": t.role,
                 "rating": t.rating,
                 "order": t.order,
+                # The quote is stored as plain text; running it through
+                # markdown lets an admin optionally use *emphasis* etc.,
+                # and wraps it in a <p> for free either way.
                 "body_html": md.markdown(t.quote.strip()) if t.quote else "",
             }
             for t in rows
@@ -47,6 +71,10 @@ def get_testimonials() -> list[dict]:
 
 
 def get_gallery_items() -> list[dict]:
+    """All gallery photos, ordered for display. `image` is either a path
+    under /images/uploads/ (once a real photo's been uploaded through the
+    admin panel) or an empty string, which the gallery template treats as
+    "show the placeholder icon tile instead"."""
     with SessionLocal() as db:
         rows = db.query(GalleryItem).order_by(GalleryItem.order).all()
         return [
@@ -62,6 +90,7 @@ def get_gallery_items() -> list[dict]:
 
 
 def get_faqs() -> list[dict]:
+    """All FAQ entries, ordered for display."""
     with SessionLocal() as db:
         rows = db.query(FAQItem).order_by(FAQItem.order).all()
         return [
@@ -76,6 +105,15 @@ def get_faqs() -> list[dict]:
 
 
 def get_site_settings() -> dict:
+    """Site-wide contact info, social links and branding text — injected
+    into every page's context (see app/routers/pages.py:base_context) and
+    referenced throughout the templates as `settings.phone_display`,
+    `settings.whatsapp_number`, etc.
+
+    Falls back to a fresh (unsaved) SiteSetting()'s defaults if the single
+    settings row doesn't exist yet, so the site never breaks even before
+    app/seed.py or a first admin save has created it.
+    """
     with SessionLocal() as db:
         row = db.query(SiteSetting).filter(SiteSetting.id == 1).first()
         if row is None:

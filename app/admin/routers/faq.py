@@ -1,3 +1,9 @@
+"""The admin panel's FAQ section — full CRUD for the FAQItem table. Same
+list/new/create/edit/delete shape as services.py (see that file for the
+fuller explanatory comments); fields here are just question, order, and
+the answer text.
+"""
+
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, Request

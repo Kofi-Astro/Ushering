@@ -188,6 +188,11 @@ FAQ_ITEMS = [
 
 
 def seed_if_empty(db: Session) -> None:
+    """Called once at startup (see app/main.py). Each table is checked and
+    seeded independently, so if the business owner has already added
+    content to one table (say, added their own testimonial) but another
+    table is somehow still empty, only the empty one gets the starter
+    data — nothing already saved is ever overwritten or duplicated."""
     if db.query(Service).count() == 0:
         db.add_all(Service(**data) for data in SERVICES)
     if db.query(Testimonial).count() == 0:

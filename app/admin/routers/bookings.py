@@ -1,3 +1,13 @@
+"""The admin panel's Bookings section — lists every Book Us submission,
+filterable by status, with a per-row form to move a booking through the
+new -> contacted -> confirmed -> completed (or cancelled) workflow.
+
+This is read/update only — there's no create or delete here, since
+bookings are only ever created by the public form (app/routers/bookings.py)
+and there's no legitimate reason for one to be deleted rather than marked
+cancelled.
+"""
+
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -16,6 +26,9 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / 
 
 @router.get("")
 def list_bookings(request: Request, status: str | None = None, db: Session = Depends(get_db)):
+    """Lists bookings newest-first, optionally filtered to one status via
+    ?status=new etc. (the filter tabs in admin/bookings.html link here).
+    Also computes a count per status for those tabs' "(N)" badges."""
     query = db.query(Booking).order_by(Booking.created_at.desc())
     if status:
         query = query.filter(Booking.status == status)
@@ -42,6 +55,10 @@ def list_bookings(request: Request, status: str | None = None, db: Session = Dep
 
 @router.post("/{booking_id}/status")
 def update_status(booking_id: int, status: str = Form(...), db: Session = Depends(get_db)):
+    """Handles the per-booking status dropdown + Update button in
+    admin/bookings.html. Silently does nothing if the id doesn't exist
+    (shouldn't happen in normal use, but no need to error over it) and
+    then always redirects back to the list either way."""
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking:
         booking.status = BookingStatus(status)

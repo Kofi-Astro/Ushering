@@ -1,3 +1,10 @@
+"""The admin panel's Testimonials section — full CRUD for the Testimonial
+table. Same list/new/create/edit/delete shape as services.py (see that
+file for the fuller explanatory comments); the only real difference is
+the fields being edited: name, role, a 1-5 rating, order, and the quote
+text itself.
+"""
+
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Form, Request

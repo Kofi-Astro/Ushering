@@ -1,9 +1,17 @@
-// GPS Ushering and Events — shared site behaviour
+// GPS Ushering and Events — shared site behaviour, loaded on every public
+// page (see app/templates/base.html). Nothing here needs a build step or
+// any library — plain DOM APIs throughout. Each block below is
+// independent and guards itself with an `if (element)` check, so this
+// one file works fine even on pages that don't have, say, a gallery or a
+// booking form.
 
 document.addEventListener('DOMContentLoaded', () => {
-  /* Light / dark theme toggle. The initial theme is set synchronously in
-     <head> (see layout.njk) to avoid a flash of the wrong theme; this just
-     wires up the click handler and keeps the icon in sync. */
+  /* Light / dark theme toggle. The INITIAL theme is set synchronously by
+     an inline <script> at the very top of <head> (see app/templates/
+     base.html) — before this file even loads — specifically to avoid a
+     flash of the wrong theme on page load. This block only wires up the
+     toggle button's click handler and keeps its moon/sun icon in sync
+     with whatever theme is currently active. */
   const themeToggle = document.querySelector('.theme-toggle');
   if (themeToggle) {
     const icon = themeToggle.querySelector('i');
@@ -24,7 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* Mobile nav toggle */
+  /* Mobile nav toggle: the hamburger button just toggles an "open" class
+     on itself (animates into an X, see css/style.css) and on the nav
+     links list (slides it into view). Clicking any link inside also
+     closes the menu, so navigating doesn't leave it stuck open. */
   const navToggle = document.querySelector('.nav-toggle');
   const navLinks = document.querySelector('.nav-links');
   if (navToggle && navLinks) {
@@ -51,7 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* FAQ accordion */
+  /* FAQ accordion: only one answer open at a time. Clicking a question
+     closes whichever other one is currently open, then — unless the
+     clicked item WAS the one that just got closed — opens it by animating
+     max-height from 0 to its natural scrollHeight (a plain CSS
+     `height: auto` transition doesn't animate, so scrollHeight is the
+     usual workaround). */
   document.querySelectorAll('.faq-item').forEach((item) => {
     const question = item.querySelector('.faq-question');
     const answer = item.querySelector('.faq-answer');
@@ -69,7 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* Gallery filter */
+  /* Gallery filter: category buttons (All/Weddings/Corporate/...) just
+     show/hide tiles by comparing the button's data-filter to each tile's
+     data-category — no re-fetching or re-rendering, every tile is
+     already in the page and this only toggles CSS display. */
   const filterButtons = document.querySelectorAll('.filter-btn');
   const galleryItems = document.querySelectorAll('.gallery-item');
   filterButtons.forEach((btn) => {
@@ -84,7 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* Gallery lightbox */
+  /* Gallery lightbox: clicking any tile opens the full-screen overlay
+     (only present on the Gallery page — see the `lightbox=True` flag in
+     app/routers/pages.py:gallery_page) and shows that tile's caption.
+     Closes via the explicit close button, or by clicking the dark
+     backdrop itself (the `e.target === lightbox` check distinguishes a
+     click on the backdrop from a click bubbling up from its contents). */
   const lightbox = document.querySelector('.lightbox');
   if (lightbox) {
     const lightboxCaption = lightbox.querySelector('.lightbox-caption');
