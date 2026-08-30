@@ -30,6 +30,7 @@
 {% if schema_json %}
 <script type="application/ld+json">{{ schema_json | safe }}</script>
 {% endif %}
+{% block extra_head %}{% endblock %}
 </head>
 <body>
 
@@ -54,5 +55,6 @@
 {% endif %}
 
 <script src="/js/main.js"></script>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -725,7 +725,8 @@ section { padding: 90px 0; }
 .contact-social a:hover { background: var(--c-gold); border-color: var(--c-gold); color: var(--c-black); }
 
 .map-frame {
-  margin-top: 24px;
+  margin-top: 10px;
+  height: 260px;
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -773,6 +774,11 @@ section { padding: 90px 0; }
   background: var(--surface);
 }
 .field textarea { resize: vertical; min-height: 120px; }
+.field .hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
 .form-note {
   font-size: 0.82rem;
   color: var(--text-muted);
