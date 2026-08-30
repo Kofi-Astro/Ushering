@@ -29,7 +29,17 @@ elif database_url.startswith("postgresql://"):
 # thread, so this relaxes that check. Not needed (and not passed) for
 # Postgres, which doesn't have this restriction.
 connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-engine = create_engine(database_url, connect_args=connect_args)
+# Managed Postgres hosts (Railway included) silently close connections
+# that sit idle for a while. Without pool_pre_ping, the next request to
+# reuse one of those dead connections fails with a confusing
+# "SSL connection has been closed unexpectedly" error. pool_pre_ping runs
+# a cheap SELECT 1 before handing out a pooled connection and transparently
+# reconnects if it's gone — doesn't apply to (and isn't needed for) SQLite.
+engine = create_engine(
+    database_url,
+    connect_args=connect_args,
+    pool_pre_ping=not database_url.startswith("sqlite"),
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
