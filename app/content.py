@@ -18,6 +18,8 @@ made through the admin panel is visible on the very next public page
 request with no cache to invalidate.
 """
 
+from urllib.parse import urlparse
+
 import markdown as md
 
 from .database import SessionLocal
@@ -104,6 +106,23 @@ def get_faqs() -> list[dict]:
         ]
 
 
+def _handle_from_url(url: str | None, at: bool = True) -> str | None:
+    """Derives a displayable handle from a social profile URL's last path
+    segment — e.g. https://www.instagram.com/foo -> "@foo". Returns None
+    for an unset/placeholder URL ("#" or empty) so templates can skip the
+    line entirely rather than render a broken-looking handle. Facebook
+    page names are conventionally shown without the "@" (at=False).
+    """
+    if not url or url == "#":
+        return None
+    segment = urlparse(url).path.strip("/").split("/")[-1]
+    if not segment:
+        return None
+    if at and not segment.startswith("@"):
+        return f"@{segment}"
+    return segment
+
+
 def get_site_settings() -> dict:
     """Site-wide contact info, social links and branding text — injected
     into every page's context (see app/routers/pages.py:base_context) and
@@ -129,4 +148,7 @@ def get_site_settings() -> dict:
             "facebook_url": row.facebook_url,
             "instagram_url": row.instagram_url,
             "tiktok_url": row.tiktok_url,
+            "facebook_handle": _handle_from_url(row.facebook_url, at=False),
+            "instagram_handle": _handle_from_url(row.instagram_url),
+            "tiktok_handle": _handle_from_url(row.tiktok_url),
         }

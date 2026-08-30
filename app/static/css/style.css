@@ -847,6 +847,26 @@ section { padding: 90px 0; }
   transition: all var(--transition);
 }
 .footer-social a:hover { background: var(--c-gold); border-color: var(--c-gold); color: var(--c-black); }
+.footer-handles {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(201, 162, 39, 0.14);
+}
+.footer-handles li { margin-bottom: 7px; }
+.footer-handles a {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.7);
+  transition: color var(--transition);
+}
+.footer-handles a:hover { color: var(--c-gold); }
+.footer-handles .handle-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--c-gold);
+  font-weight: 600;
+}
+.footer-handles .dot { color: rgba(255,255,255,0.3); margin: 0 6px; }
 .footer-bottom {
   padding: 24px 0;
   display: flex;

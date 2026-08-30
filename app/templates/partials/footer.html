@@ -8,6 +8,11 @@
         <a href="{{ settings.instagram_url }}" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="{{ settings.tiktok_url }}" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
       </div>
+      <ul class="footer-handles">
+        {% if settings.facebook_handle %}<li><a href="{{ settings.facebook_url }}"><span class="handle-label">Facebook</span><span class="dot">&middot;</span>{{ settings.facebook_handle }}</a></li>{% endif %}
+        {% if settings.instagram_handle %}<li><a href="{{ settings.instagram_url }}"><span class="handle-label">Instagram</span><span class="dot">&middot;</span>{{ settings.instagram_handle }}</a></li>{% endif %}
+        {% if settings.tiktok_handle %}<li><a href="{{ settings.tiktok_url }}"><span class="handle-label">TikTok</span><span class="dot">&middot;</span>{{ settings.tiktok_handle }}</a></li>{% endif %}
+      </ul>
     </div>
     <div>
       <h4>Quick Links</h4>
