@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Welcome back</h2>
+</div>
+<div class="item-list">
+  <a class="item-row" href="/bookings" style="text-decoration:none;">
+    <div class="item-icon"><i class="fas fa-calendar-check"></i></div>
+    <div class="item-body">
+      <div class="item-title">Bookings</div>
+      <div class="item-meta">{{ counts.bookings }} total &middot; {{ counts.new_bookings }} new</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--c-text-light);"></i>
+  </a>
+  <a class="item-row" href="/services" style="text-decoration:none;">
+    <div class="item-icon"><i class="fas fa-concierge-bell"></i></div>
+    <div class="item-body">
+      <div class="item-title">Services</div>
+      <div class="item-meta">{{ counts.services }} published</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--c-text-light);"></i>
+  </a>
+  <a class="item-row" href="/gallery" style="text-decoration:none;">
+    <div class="item-icon"><i class="fas fa-images"></i></div>
+    <div class="item-body">
+      <div class="item-title">Gallery</div>
+      <div class="item-meta">{{ counts.gallery }} photos</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--c-text-light);"></i>
+  </a>
+  <a class="item-row" href="/testimonials" style="text-decoration:none;">
+    <div class="item-icon"><i class="fas fa-quote-right"></i></div>
+    <div class="item-body">
+      <div class="item-title">Testimonials</div>
+      <div class="item-meta">{{ counts.testimonials }} published</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--c-text-light);"></i>
+  </a>
+  <a class="item-row" href="/faq" style="text-decoration:none;">
+    <div class="item-icon"><i class="fas fa-circle-question"></i></div>
+    <div class="item-body">
+      <div class="item-title">FAQ</div>
+      <div class="item-meta">{{ counts.faq }} questions</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--c-text-light);"></i>
+  </a>
+  <a class="item-row" href="/settings" style="text-decoration:none;">
+    <div class="item-icon"><i class="fas fa-gear"></i></div>
+    <div class="item-body">
+      <div class="item-title">Site Settings</div>
+      <div class="item-meta">Contact details, social links, business info</div>
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--c-text-light);"></i>
+  </a>
+</div>
+{% endblock %}

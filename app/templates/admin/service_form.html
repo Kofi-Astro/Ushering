@@ -1,0 +1,42 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>{{ 'Edit Service' if service else 'Add Service' }}</h2>
+  <a href="/services" class="btn-secondary">Back to Services</a>
+</div>
+
+<div class="form-card">
+  <form method="post" action="{{ ('/services/' ~ service.id ~ '/edit') if service else '/services/new' }}">
+    <div class="field">
+      <label for="title">Title</label>
+      <input type="text" id="title" name="title" value="{{ service.title if service else '' }}" required>
+    </div>
+    <div class="field">
+      <label for="icon">Icon</label>
+      <input type="text" id="icon" name="icon" value="{{ service.icon if service else 'fa-solid fa-star' }}" required>
+      <p class="hint">A Font Awesome class, e.g. <code>fa-solid fa-rings-wedding</code>. Browse icons at fontawesome.com/search.</p>
+    </div>
+    <div class="field">
+      <label for="order">Display Order</label>
+      <input type="number" id="order" name="order" value="{{ service.order if service else 1 }}" min="1" required>
+      <p class="hint">Lower numbers show first. The Home page shows the first 6.</p>
+    </div>
+    <div class="field">
+      <label for="home_description">Short Description (Home page)</label>
+      <textarea id="home_description" name="home_description" required>{{ service.home_description if service else '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="description">Full Description (Services page)</label>
+      <textarea id="description" name="description" required>{{ service.description if service else '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="highlights">Highlights</label>
+      <textarea id="highlights" name="highlights" rows="5">{{ service.highlights if service else '' }}</textarea>
+      <p class="hint">One per line — shown as a bullet list on the Services page.</p>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Service</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

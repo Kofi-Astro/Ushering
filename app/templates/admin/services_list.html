@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Services</h2>
+  <a href="/services/new" class="btn-primary"><i class="fas fa-plus"></i> Add Service</a>
+</div>
+
+{% if services|length == 0 %}
+<p class="empty">No services yet.</p>
+{% endif %}
+
+<div class="item-list">
+  {% for s in services %}
+  <div class="item-row">
+    <div class="item-icon"><i class="{{ s.icon }}"></i></div>
+    <div class="item-body">
+      <div class="item-title">{{ s.title }}</div>
+      <div class="item-meta">{{ s.home_description }}</div>
+    </div>
+    <span class="order-badge">#{{ s.order }}</span>
+    <div class="item-actions">
+      <a href="/services/{{ s.id }}/edit" class="btn-secondary">Edit</a>
+      <form method="post" action="/services/{{ s.id }}/delete" onsubmit="return confirm('Delete this service?');">
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

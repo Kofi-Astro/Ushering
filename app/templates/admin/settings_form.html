@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Site Settings</h2>
+</div>
+
+<div class="form-card">
+  <form method="post" action="/settings">
+    <div class="field">
+      <label for="site_name">Business Name</label>
+      <input type="text" id="site_name" name="site_name" value="{{ settings.site_name }}" required>
+    </div>
+    <div class="field">
+      <label for="site_url">Website URL</label>
+      <input type="text" id="site_url" name="site_url" value="{{ settings.site_url }}" required>
+      <p class="hint">Used in SEO tags and the sitemap, e.g. https://www.gpsusheringandevents.com</p>
+    </div>
+    <div class="field">
+      <label for="tagline">Tagline</label>
+      <input type="text" id="tagline" name="tagline" value="{{ settings.tagline }}" required>
+    </div>
+    <div class="field">
+      <label for="phone_display">Phone (display format)</label>
+      <input type="text" id="phone_display" name="phone_display" value="{{ settings.phone_display }}" required>
+    </div>
+    <div class="field">
+      <label for="whatsapp_number">WhatsApp Number</label>
+      <input type="text" id="whatsapp_number" name="whatsapp_number" value="{{ settings.whatsapp_number }}" required>
+      <p class="hint">Digits only, with country code — e.g. 233241234567 (no +, no spaces).</p>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ settings.email }}" required>
+    </div>
+    <div class="field">
+      <label for="address">Address / Location</label>
+      <input type="text" id="address" name="address" value="{{ settings.address }}" required>
+    </div>
+    <div class="field">
+      <label for="facebook_url">Facebook URL</label>
+      <input type="text" id="facebook_url" name="facebook_url" value="{{ settings.facebook_url }}">
+    </div>
+    <div class="field">
+      <label for="instagram_url">Instagram URL</label>
+      <input type="text" id="instagram_url" name="instagram_url" value="{{ settings.instagram_url }}">
+    </div>
+    <div class="field">
+      <label for="tiktok_url">TikTok URL</label>
+      <input type="text" id="tiktok_url" name="tiktok_url" value="{{ settings.tiktok_url }}">
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Settings</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

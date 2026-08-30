@@ -1,0 +1,27 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>{{ 'Edit FAQ' if faq else 'Add FAQ' }}</h2>
+  <a href="/faq" class="btn-secondary">Back to FAQ</a>
+</div>
+
+<div class="form-card">
+  <form method="post" action="{{ ('/faq/' ~ faq.id ~ '/edit') if faq else '/faq/new' }}">
+    <div class="field">
+      <label for="question">Question</label>
+      <input type="text" id="question" name="question" value="{{ faq.question if faq else '' }}" required>
+    </div>
+    <div class="field">
+      <label for="order">Display Order</label>
+      <input type="number" id="order" name="order" value="{{ faq.order if faq else 1 }}" min="1" required>
+    </div>
+    <div class="field">
+      <label for="answer">Answer</label>
+      <textarea id="answer" name="answer" rows="5" required>{{ faq.answer if faq else '' }}</textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Question</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

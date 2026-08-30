@@ -35,8 +35,11 @@ def verify_session_token(token: str | None) -> bool:
 
 
 def require_admin(admin_session: str | None = Cookie(default=None)) -> None:
+    """FastAPI dependency guarding every admin route. Raising a redirect as
+    an HTTPException (rather than returning a bool the route has to check)
+    keeps every protected route handler focused on its own job."""
     if not verify_session_token(admin_session):
         raise HTTPException(
             status_code=status.HTTP_303_SEE_OTHER,
-            headers={"Location": "/admin/login"},
+            headers={"Location": "/login"},
         )

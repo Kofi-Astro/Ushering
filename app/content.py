@@ -1,55 +1,94 @@
-"""Loads the site's editable content — services, gallery, testimonials, FAQ
-and site-wide settings — straight out of the `content/` folder in this repo.
-
-These are plain Markdown files with YAML front matter (parsed with
-python-frontmatter) plus one settings.json file. They're the same files the
-content-admin (Decap CMS, at /content-admin) edits and commits back to this
-repo — this module is simply the Python-side reader for them, replacing what
-used to be Eleventy's collections API.
+"""Read-side helpers for the site's editable content — services, gallery,
+testimonials, FAQ and site-wide settings. All of it lives in the database
+now (see app/models.py) and is edited through the admin panel at
+/services, /gallery, /testimonials, /faq and /settings. This module is
+just the shape-conversion layer between the DB rows and what the public
+page templates expect (kept stable so app/routers/pages.py and the
+templates under app/templates/pages/ didn't need to change).
 """
 
-import json
-from pathlib import Path
-
-import frontmatter
 import markdown as md
 
-CONTENT_DIR = Path(__file__).resolve().parent.parent / "content"
-
-
-def _load_collection(subdir: str) -> list[dict]:
-    folder = CONTENT_DIR / subdir
-    items = []
-    if not folder.exists():
-        return items
-    for path in sorted(folder.glob("*.md")):
-        post = frontmatter.load(path)
-        data = dict(post.metadata)
-        body = post.content.strip()
-        data["body_html"] = md.markdown(body) if body else ""
-        items.append(data)
-    items.sort(key=lambda d: d.get("order", 0))
-    return items
+from .database import SessionLocal
+from .models import FAQItem, GalleryItem, Service, SiteSetting, Testimonial
 
 
 def get_services() -> list[dict]:
-    return _load_collection("services")
+    with SessionLocal() as db:
+        rows = db.query(Service).order_by(Service.order).all()
+        return [
+            {
+                "id": s.id,
+                "title": s.title,
+                "icon": s.icon,
+                "order": s.order,
+                "homeDescription": s.home_description,
+                "description": s.description,
+                "highlights": [line.strip() for line in s.highlights.splitlines() if line.strip()],
+            }
+            for s in rows
+        ]
 
 
 def get_testimonials() -> list[dict]:
-    return _load_collection("testimonials")
+    with SessionLocal() as db:
+        rows = db.query(Testimonial).order_by(Testimonial.order).all()
+        return [
+            {
+                "id": t.id,
+                "name": t.name,
+                "role": t.role,
+                "rating": t.rating,
+                "order": t.order,
+                "body_html": md.markdown(t.quote.strip()) if t.quote else "",
+            }
+            for t in rows
+        ]
 
 
 def get_gallery_items() -> list[dict]:
-    return _load_collection("gallery")
+    with SessionLocal() as db:
+        rows = db.query(GalleryItem).order_by(GalleryItem.order).all()
+        return [
+            {
+                "id": g.id,
+                "label": g.label,
+                "category": g.category,
+                "order": g.order,
+                "image": g.image,
+            }
+            for g in rows
+        ]
 
 
 def get_faqs() -> list[dict]:
-    return _load_collection("faq")
+    with SessionLocal() as db:
+        rows = db.query(FAQItem).order_by(FAQItem.order).all()
+        return [
+            {
+                "id": f.id,
+                "question": f.question,
+                "order": f.order,
+                "body_html": md.markdown(f.answer.strip()) if f.answer else "",
+            }
+            for f in rows
+        ]
 
 
 def get_site_settings() -> dict:
-    # Not cached: this is a tiny file and re-reading it means a content-admin
-    # save is reflected on the very next request, no restart needed.
-    settings_path = CONTENT_DIR / "settings.json"
-    return json.loads(settings_path.read_text())
+    with SessionLocal() as db:
+        row = db.query(SiteSetting).filter(SiteSetting.id == 1).first()
+        if row is None:
+            row = SiteSetting(id=1)
+        return {
+            "site_name": row.site_name,
+            "site_url": row.site_url,
+            "tagline": row.tagline,
+            "phone_display": row.phone_display,
+            "whatsapp_number": row.whatsapp_number,
+            "email": row.email,
+            "address": row.address,
+            "facebook_url": row.facebook_url,
+            "instagram_url": row.instagram_url,
+            "tiktok_url": row.tiktok_url,
+        }

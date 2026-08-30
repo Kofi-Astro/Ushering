@@ -8,9 +8,9 @@
 <link rel="stylesheet" href="/static/admin.css">
 </head>
 <body class="login-body">
-  <form class="login-card" method="post" action="/admin/login">
+  <form class="login-card" method="post" action="/login">
     <h1>GPS Ushering</h1>
-    <p class="subtitle">Booking Inquiries Admin</p>
+    <p class="subtitle">Site Administration</p>
     {% if error %}<p class="error">{{ error }}</p>{% endif %}
     <label for="username">Username</label>
     <input type="text" id="username" name="username" required autofocus>

@@ -1,0 +1,39 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>{{ 'Edit Testimonial' if testimonial else 'Add Testimonial' }}</h2>
+  <a href="/testimonials" class="btn-secondary">Back to Testimonials</a>
+</div>
+
+<div class="form-card">
+  <form method="post" action="{{ ('/testimonials/' ~ testimonial.id ~ '/edit') if testimonial else '/testimonials/new' }}">
+    <div class="field">
+      <label for="name">Client Name</label>
+      <input type="text" id="name" name="name" value="{{ testimonial.name if testimonial else '' }}" required>
+    </div>
+    <div class="field">
+      <label for="role">Role / Event</label>
+      <input type="text" id="role" name="role" value="{{ testimonial.role if testimonial else '' }}" placeholder="e.g. Bride, Accra" required>
+    </div>
+    <div class="field">
+      <label for="rating">Rating</label>
+      <select id="rating" name="rating">
+        {% for n in range(1, 6) %}
+        <option value="{{ n }}" {{ 'selected' if testimonial and testimonial.rating == n or (not testimonial and n == 5) }}>{{ n }} star{{ 's' if n != 1 }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="order">Display Order</label>
+      <input type="number" id="order" name="order" value="{{ testimonial.order if testimonial else 1 }}" min="1" required>
+    </div>
+    <div class="field">
+      <label for="quote">Quote</label>
+      <textarea id="quote" name="quote" required>{{ testimonial.quote if testimonial else '' }}</textarea>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Testimonial</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

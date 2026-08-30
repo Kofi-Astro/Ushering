@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Testimonials</h2>
+  <a href="/testimonials/new" class="btn-primary"><i class="fas fa-plus"></i> Add Testimonial</a>
+</div>
+
+{% if testimonials|length == 0 %}
+<p class="empty">No testimonials yet.</p>
+{% endif %}
+
+<div class="item-list">
+  {% for t in testimonials %}
+  <div class="item-row">
+    <div class="item-icon"><i class="fas fa-quote-right"></i></div>
+    <div class="item-body">
+      <div class="item-title">{{ t.name }} <span style="color:var(--c-text-light); font-weight:400;">— {{ t.role }}</span></div>
+      <div class="item-meta">{{ t.quote[:90] }}{% if t.quote|length > 90 %}…{% endif %}</div>
+    </div>
+    <span class="order-badge">#{{ t.order }}</span>
+    <div class="item-actions">
+      <a href="/testimonials/{{ t.id }}/edit" class="btn-secondary">Edit</a>
+      <form method="post" action="/testimonials/{{ t.id }}/delete" onsubmit="return confirm('Delete this testimonial?');">
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

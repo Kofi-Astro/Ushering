@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>FAQ</h2>
+  <a href="/faq/new" class="btn-primary"><i class="fas fa-plus"></i> Add Question</a>
+</div>
+
+{% if faqs|length == 0 %}
+<p class="empty">No FAQ entries yet.</p>
+{% endif %}
+
+<div class="item-list">
+  {% for f in faqs %}
+  <div class="item-row">
+    <div class="item-icon"><i class="fas fa-circle-question"></i></div>
+    <div class="item-body">
+      <div class="item-title">{{ f.question }}</div>
+      <div class="item-meta">{{ f.answer[:100] }}{% if f.answer|length > 100 %}…{% endif %}</div>
+    </div>
+    <span class="order-badge">#{{ f.order }}</span>
+    <div class="item-actions">
+      <a href="/faq/{{ f.id }}/edit" class="btn-secondary">Edit</a>
+      <form method="post" action="/faq/{{ f.id }}/delete" onsubmit="return confirm('Delete this question?');">
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -14,11 +14,16 @@ class Settings(BaseSettings):
     # persist a login in a real browser). Leave true for Railway (HTTPS);
     # set to false only for local dev over http://localhost.
     cookie_secure: bool = True
+    # The admin panel (bookings + content management) is served as a
+    # separate virtual host, matched against the incoming request's Host
+    # header (see app/main.py). Defaults to admin.localhost, which modern
+    # browsers and OSes resolve to 127.0.0.1 with no /etc/hosts editing
+    # needed — visit it directly during local development. Set this to
+    # your real admin subdomain (e.g. admin.gpsusheringandevents.com) in
+    # production.
+    admin_hostname: str = "admin.localhost"
     frontend_origins: str = "*"
     database_url: str = "sqlite:///./bookings.db"
-
-    github_oauth_client_id: str = ""
-    github_oauth_client_secret: str = ""
 
     @property
     def allowed_origins(self) -> list[str]:

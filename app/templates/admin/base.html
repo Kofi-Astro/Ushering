@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ title }} | GPS Ushering Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <a href="/" class="admin-brand"><span class="logo-mark">G</span> GPS Ushering Admin</a>
+    <nav class="admin-nav">
+      <a href="/bookings" class="{{ 'active' if active == 'bookings' }}">Bookings</a>
+      <a href="/services" class="{{ 'active' if active == 'services' }}">Services</a>
+      <a href="/gallery" class="{{ 'active' if active == 'gallery' }}">Gallery</a>
+      <a href="/testimonials" class="{{ 'active' if active == 'testimonials' }}">Testimonials</a>
+      <a href="/faq" class="{{ 'active' if active == 'faq' }}">FAQ</a>
+      <a href="/settings" class="{{ 'active' if active == 'settings' }}">Settings</a>
+    </nav>
+    <form method="post" action="/logout"><button class="link-btn" type="submit">Log Out</button></form>
+  </header>
+
+  <main class="admin-main">
+    {% if message %}<div class="flash">{{ message }}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
