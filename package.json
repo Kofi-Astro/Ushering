@@ -1,0 +1,13 @@
+{
+  "name": "gps-ushering-and-events",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website for GPS Ushering and Events",
+  "scripts": {
+    "start": "eleventy --serve",
+    "build": "eleventy"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  }
+}
