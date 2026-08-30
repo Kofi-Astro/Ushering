@@ -39,6 +39,7 @@ def home(request: Request):
         "sameAs": ["https://facebook.com/", "https://instagram.com/"],
     }
     return templates.TemplateResponse(
+        request,
         "pages/index.html",
         base_context(
             request,
@@ -57,6 +58,7 @@ def home(request: Request):
 @router.get("/about.html")
 def about(request: Request):
     return templates.TemplateResponse(
+        request,
         "pages/about.html",
         base_context(
             request,
@@ -71,6 +73,7 @@ def about(request: Request):
 @router.get("/services.html")
 def services_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "pages/services.html",
         base_context(
             request,
@@ -86,6 +89,7 @@ def services_page(request: Request):
 @router.get("/gallery.html")
 def gallery_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "pages/gallery.html",
         base_context(
             request,
@@ -102,6 +106,7 @@ def gallery_page(request: Request):
 @router.get("/testimonials.html")
 def testimonials_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "pages/testimonials.html",
         base_context(
             request,
@@ -117,6 +122,7 @@ def testimonials_page(request: Request):
 @router.get("/faq.html")
 def faq_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "pages/faq.html",
         base_context(
             request,
@@ -132,6 +138,7 @@ def faq_page(request: Request):
 @router.get("/book-us.html")
 def book_us_page(request: Request):
     return templates.TemplateResponse(
+        request,
         "pages/book-us.html",
         base_context(
             request,
