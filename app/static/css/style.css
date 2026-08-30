@@ -12,6 +12,8 @@
   --c-gold-light: #e4c860;
   --c-wine: #6d0e23;
   --c-wine-dark: #4a0918;
+  --c-navy: #16294f;
+  --c-navy-dark: #0d1a34;
   --c-text: #2a2a2a;
   --c-text-light: #6b6b6b;
   --c-border: #e8e2d5;
@@ -189,16 +191,8 @@ p { color: var(--text-muted); }
   color: var(--text);
 }
 .logo .logo-mark {
-  width: 42px;
   height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--c-wine), var(--c-black));
-  color: var(--c-gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  font-weight: 700;
+  width: auto;
   flex-shrink: 0;
 }
 .logo span { color: var(--c-gold); }
@@ -271,7 +265,7 @@ p { color: var(--text-muted); }
 /* ---------- Hero ---------- */
 .hero {
   position: relative;
-  background: linear-gradient(135deg, var(--c-black) 0%, var(--c-wine-dark) 55%, var(--c-wine) 100%);
+  background: linear-gradient(135deg, var(--c-black) 0%, var(--c-navy-dark) 32%, var(--c-wine-dark) 68%, var(--c-wine) 100%);
   color: var(--c-white);
   padding: 130px 0 110px;
   overflow: hidden;
@@ -387,7 +381,7 @@ section { padding: 90px 0; }
 .media-frame {
   aspect-ratio: 4/5;
   border-radius: var(--radius);
-  background: linear-gradient(160deg, var(--c-wine), var(--c-black));
+  background: linear-gradient(160deg, var(--c-navy), var(--c-wine), var(--c-black));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,6 +449,9 @@ section { padding: 90px 0; }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.4rem;
   margin: 0 auto 18px;
+}
+.value-card:nth-child(even) .value-icon {
+  background: linear-gradient(135deg, var(--c-navy), var(--c-black));
 }
 
 /* ---------- Cards / Services ---------- */
@@ -557,7 +554,7 @@ section { padding: 90px 0; }
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  background: linear-gradient(150deg, var(--c-wine) 0%, var(--c-black) 100%);
+  background: linear-gradient(150deg, var(--c-navy) 0%, var(--c-wine) 55%, var(--c-black) 100%);
 }
 .gallery-item::after {
   content: attr(data-label);
@@ -601,7 +598,7 @@ section { padding: 90px 0; }
   width: min(80vw, 640px);
   aspect-ratio: 4/3;
   border-radius: var(--radius);
-  background: linear-gradient(150deg, var(--c-wine) 0%, var(--c-black) 100%);
+  background: linear-gradient(150deg, var(--c-navy) 0%, var(--c-wine) 55%, var(--c-black) 100%);
   display: flex; align-items: center; justify-content: center;
   color: rgba(255,255,255,0.4);
   font-size: 3rem;
@@ -649,6 +646,9 @@ section { padding: 90px 0; }
   display: flex; align-items: center; justify-content: center;
   font-weight: 700;
   flex-shrink: 0;
+}
+.testi-card:nth-child(even) .testi-avatar {
+  background: linear-gradient(135deg, var(--c-navy), var(--c-black));
 }
 .testi-author .name { font-weight: 600; color: var(--text); font-size: 0.95rem; }
 .testi-author .role { font-size: 0.8rem; color: var(--text-muted); }
@@ -798,7 +798,7 @@ section { padding: 90px 0; }
 
 /* ---------- CTA banner ---------- */
 .cta-banner {
-  background: linear-gradient(120deg, var(--c-wine), var(--c-black));
+  background: linear-gradient(120deg, var(--c-navy) 0%, var(--c-wine) 55%, var(--c-black) 100%);
   color: var(--c-white);
   border-radius: var(--radius);
   padding: 56px 48px;

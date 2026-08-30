@@ -1,8 +1,8 @@
 /* ==========================================================================
    GPS Ushering and Events — Admin Panel
-   Same brand system as the public site (black / gold / burgundy / white,
-   Playfair Display + Poppins) so the admin feels like part of the same
-   product, not a bolted-on generic dashboard.
+   Same brand system as the public site (black / gold / burgundy / navy /
+   white, Playfair Display + Poppins) so the admin feels like part of the
+   same product, not a bolted-on generic dashboard.
    ========================================================================== */
 
 :root {
@@ -14,6 +14,8 @@
   --c-gold-light: #e4c860;
   --c-wine: #6d0e23;
   --c-wine-dark: #4a0918;
+  --c-navy: #16294f;
+  --c-navy-dark: #0d1a34;
   --c-text: #2a2a2a;
   --c-text-light: #6b6b6b;
   --c-border: #e8e2d5;
@@ -53,7 +55,7 @@ h1, h2, h3 {
   justify-content: center;
   padding: 24px;
   position: relative;
-  background: linear-gradient(150deg, var(--c-black) 0%, var(--c-wine-dark) 55%, var(--c-wine) 100%);
+  background: linear-gradient(150deg, var(--c-black) 0%, var(--c-navy-dark) 32%, var(--c-wine-dark) 68%, var(--c-wine) 100%);
   overflow: hidden;
 }
 .login-body::before {
@@ -78,17 +80,8 @@ h1, h2, h3 {
 
 .login-mark { margin-bottom: 20px; }
 .login-mark .logo-mark {
-  width: 56px; height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--c-wine), var(--c-black));
-  border: 1px solid var(--c-gold);
-  color: var(--c-gold);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-heading);
-  font-size: 1.5rem;
-  font-weight: 700;
+  height: 64px;
+  width: auto;
 }
 
 .login-eyebrow {
@@ -168,7 +161,7 @@ h1, h2, h3 {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: linear-gradient(120deg, var(--c-black) 0%, var(--c-wine-dark) 100%);
+  background: linear-gradient(120deg, var(--c-black) 0%, var(--c-navy-dark) 45%, var(--c-wine-dark) 100%);
   color: var(--c-white);
   padding: 18px 32px;
   display: flex;
@@ -192,14 +185,8 @@ h1, h2, h3 {
   letter-spacing: 0.2px;
 }
 .admin-brand .logo-mark {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: rgba(201, 162, 39, 0.12);
-  border: 1px solid var(--c-gold);
-  color: var(--c-gold);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-heading);
-  font-weight: 700;
+  height: 34px;
+  width: auto;
   flex-shrink: 0;
 }
 .admin-brand .accent { color: var(--c-gold); }
@@ -363,6 +350,8 @@ h1, h2, h3 {
   flex-shrink: 0;
   font-size: 1.05rem;
 }
+.item-row:nth-child(even) .item-thumb { background: linear-gradient(150deg, var(--c-navy), var(--c-black)); }
+.item-row:nth-child(even) .item-icon { color: var(--c-navy); }
 .item-row .item-body { flex: 1; min-width: 0; }
 .item-row .item-title { font-family: var(--font-heading); font-weight: 700; color: var(--c-black); font-size: 1.05rem; }
 .item-row .item-meta { font-size: 0.84rem; color: var(--c-text-light); margin-top: 3px; }
