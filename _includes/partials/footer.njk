@@ -1,0 +1,43 @@
+<footer class="footer">
+  <div class="container footer-grid">
+    <div>
+      <a href="/index.html" class="logo"><span class="logo-mark">G</span>GPS <span>Ushering</span> &amp; Events</a>
+      <p class="about-text">Professional ushering and event support services for weddings, corporate events, funerals, conferences and special occasions across Ghana.</p>
+      <div class="footer-social">
+        <a href="{{ settings.facebook_url }}" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="{{ settings.instagram_url }}" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="{{ settings.tiktok_url }}" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+      </div>
+    </div>
+    <div>
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="/about.html">About Us</a></li>
+        <li><a href="/services.html">Services</a></li>
+        <li><a href="/gallery.html">Gallery</a></li>
+        <li><a href="/testimonials.html">Testimonials</a></li>
+        <li><a href="/faq.html">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Services</h4>
+      <ul>
+        {% for service in collections.services %}
+        {% if loop.index <= 4 %}
+        <li><a href="/services.html">{{ service.data.title }}</a></li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <div class="contact-row"><i class="fas fa-phone"></i><span class="val">{{ settings.phone_display }}</span></div>
+      <div class="contact-row"><i class="fas fa-envelope"></i><span class="val">{{ settings.email }}</span></div>
+      <div class="contact-row"><i class="fas fa-location-dot"></i><span class="val">{{ settings.address }}</span></div>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>&copy; <span class="current-year"></span> {{ settings.site_name }}. All rights reserved.</span>
+    <span><a href="/book-us.html">Book Us</a></span>
+  </div>
+</footer>
