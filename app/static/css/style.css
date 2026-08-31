@@ -233,6 +233,14 @@ p { color: var(--text-muted); }
 .nav-cta { display: flex; align-items: center; gap: 12px; }
 .nav-cta .btn { padding: 11px 24px; font-size: 0.88rem; }
 
+/* On desktop the gold "Book Us Now" button (.nav-cta) already covers this,
+   so a plain "Book Us" text link right next to it is redundant. It's kept
+   in the markup (rather than removed outright) because .nav-cta is hidden
+   below 860px and the off-canvas mobile menu needs its own way to reach
+   the booking page — see the max-width: 860px block below, which turns
+   this back on. */
+.nav-links a.nav-book-link { display: none; }
+
 .theme-toggle {
   width: 40px;
   height: 40px;
@@ -966,6 +974,7 @@ section { padding: 90px 0; }
     box-shadow: var(--shadow-lg);
   }
   .nav-links.open { right: 0; }
+  .nav-links a.nav-book-link { display: inline; }
   .nav-cta { display: none; }
   .nav-toggle { display: flex; }
   .hero-stats { gap: 30px; }

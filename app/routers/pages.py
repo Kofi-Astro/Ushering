@@ -43,10 +43,20 @@ def home(request: Request):
     # Structured data (JSON-LD) describing the business for search engines
     # — rendered into a <script type="application/ld+json"> tag by
     # templates/base.html when `schema_json` is present in the context.
+    # Built from the real site_settings row (not hardcoded) so it can
+    # never silently drift back out of sync with what's shown on the page
+    # itself — this block used to be a separate literal and kept the
+    # original placeholder phone number and broken social links long
+    # after the real ones were set everywhere else on the site.
+    settings = content.get_site_settings()
+    same_as = [
+        url for url in (settings["facebook_url"], settings["instagram_url"], settings["tiktok_url"])
+        if url and url != "#"
+    ]
     schema = {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
-        "name": "GPS Ushering and Events",
+        "name": settings["site_name"],
         "description": "Professional ushering and event support services for weddings, corporate events, funerals, conferences and special occasions across Ghana.",
         "areaServed": "Ghana",
         "address": {
@@ -55,9 +65,10 @@ def home(request: Request):
             "addressRegion": "Greater Accra",
             "addressCountry": "GH",
         },
-        "telephone": "+233240000000",
-        "url": "https://www.gpsusheringandevents.com/",
-        "sameAs": ["https://facebook.com/", "https://instagram.com/"],
+        "telephone": f"+{settings['whatsapp_number']}",
+        "email": settings["email"],
+        "url": f"{settings['site_url']}/",
+        "sameAs": same_as,
         "keywords": "ushering services, event ushers, professional ushers, wedding ushers, corporate event staff, event staffing, event support services, guest coordination, hospitality staff, event management support",
     }
     return templates.TemplateResponse(

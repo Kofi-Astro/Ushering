@@ -18,7 +18,8 @@ made through the admin panel is visible on the very next public page
 request with no cache to invalidate.
 """
 
-from urllib.parse import urlparse
+import re
+from urllib.parse import parse_qs, urlparse
 
 import markdown as md
 
@@ -112,12 +113,31 @@ def _handle_from_url(url: str | None, at: bool = True) -> str | None:
     for an unset/placeholder URL ("#" or empty) so templates can skip the
     line entirely rather than render a broken-looking handle. Facebook
     page names are conventionally shown without the "@" (at=False).
+
+    A facebook.com/search/... URL (used as a stand-in until a page's real
+    URL is confirmed — see app/routers/pages.py:home's use of it) has no
+    real page-name path segment to read, just a generic word like "top" -
+    for that shape specifically, fall back to the search query string
+    itself so the footer shows the actual business name being searched
+    for rather than a meaningless word.
+
+    A personal Facebook profile used to promote the business (rather than
+    a dedicated Page) has a slug like "firstname.lastname.1234" — the
+    trailing digits are Facebook's disambiguation suffix for common names,
+    not part of the name. Stripped and title-cased into "Firstname
+    Lastname" for a readable label instead of a raw slug.
     """
     if not url or url == "#":
         return None
-    segment = urlparse(url).path.strip("/").split("/")[-1]
-    if not segment:
-        return None
+    parsed = urlparse(url)
+    segment = parsed.path.strip("/").split("/")[-1]
+    if not segment or segment in {"search", "top", "pages", "people"}:
+        query = parse_qs(parsed.query).get("q", [None])[0]
+        return query or None
+    if not at:
+        name_only = re.sub(r"\.\d+$", "", segment)
+        if name_only != segment:
+            return name_only.replace(".", " ").replace("-", " ").title()
     if at and not segment.startswith("@"):
         return f"@{segment}"
     return segment
