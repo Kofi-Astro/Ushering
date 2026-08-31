@@ -494,6 +494,7 @@ h1, h2, h3 {
   border-left: 2px solid var(--c-border);
 }
 
+.booking-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; }
 .status-form { display: flex; gap: 10px; }
 .status-form select {
   padding: 9px 12px;

@@ -38,9 +38,9 @@
     </div>
     <div>
       <h4>Contact</h4>
-      <div class="contact-row"><i class="fas fa-phone"></i><span class="val">{{ settings.phone_display }}</span></div>
-      <div class="contact-row"><i class="fas fa-envelope"></i><span class="val">{{ settings.email }}</span></div>
-      <div class="contact-row"><i class="fas fa-location-dot"></i><span class="val">{{ settings.address }}</span></div>
+      <div class="contact-row"><i class="fas fa-phone"></i><a href="tel:{{ settings.phone_display | replace(' ', '') }}">{{ settings.phone_display }}</a></div>
+      <div class="contact-row"><i class="fas fa-envelope"></i><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></div>
+      <div class="contact-row"><i class="fas fa-location-dot"></i><a href="https://www.google.com/maps/search/?api=1&query={{ settings.address | urlencode }}" target="_blank" rel="noopener">{{ settings.address }}</a></div>
     </div>
   </div>
   <div class="container footer-bottom">

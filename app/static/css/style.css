@@ -730,7 +730,8 @@ section { padding: 90px 0; }
   flex-shrink: 0;
 }
 .contact-row .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; color: var(--c-gold); margin-bottom: 4px; }
-.contact-row a, .contact-row span.val { color: rgba(255,255,255,0.85); font-size: 0.95rem; }
+.contact-row a, .contact-row span.val { color: rgba(255,255,255,0.85); font-size: 0.95rem; transition: color var(--transition); }
+.contact-row a:hover { color: var(--c-gold); }
 .contact-social {
   display: flex; gap: 12px; margin-top: 28px;
 }

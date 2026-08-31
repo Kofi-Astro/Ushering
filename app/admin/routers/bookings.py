@@ -1,11 +1,11 @@
 """The admin panel's Bookings section — lists every Book Us submission,
 filterable by status, with a per-row form to move a booking through the
-new -> contacted -> confirmed -> completed (or cancelled) workflow.
+new -> contacted -> confirmed -> completed (or cancelled) workflow, plus a
+delete button for clearing out entries the business owner no longer needs
+to keep around (spam/test submissions, old cancelled bookings, etc.).
 
-This is read/update only — there's no create or delete here, since
-bookings are only ever created by the public form (app/routers/bookings.py)
-and there's no legitimate reason for one to be deleted rather than marked
-cancelled.
+There's no create here — bookings are only ever created by the public
+form (app/routers/bookings.py).
 """
 
 from pathlib import Path
@@ -62,5 +62,18 @@ def update_status(booking_id: int, status: str = Form(...), db: Session = Depend
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking:
         booking.status = BookingStatus(status)
+        db.commit()
+    return RedirectResponse(url="/bookings", status_code=303)
+
+
+@router.post("/{booking_id}/delete")
+def delete_booking(booking_id: int, db: Session = Depends(get_db)):
+    """Handles the Delete button on each booking card (which confirms via
+    a JS `confirm()` dialog before submitting — see admin/bookings.html).
+    Permanent, with no undo — appropriate for clearing out old cancelled
+    bookings, spam, or test submissions."""
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if booking:
+        db.delete(booking)
         db.commit()
     return RedirectResponse(url="/bookings", status_code=303)
