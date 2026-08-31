@@ -109,6 +109,28 @@ Once we've confirmed your event, changes go through us directly.)
     )
 
 
+def send_password_reset_email(reset_url: str, recipient_email: str) -> None:
+    """Emails the admin password-reset link. Unlike every other function
+    in this file, there's no on-screen fallback for this one — showing
+    the link directly to whoever clicked "forgot password" (the way the
+    booking manage_url is shown right on the success page) would let
+    anyone reset the admin password without ever proving they have access
+    to the business's own email, which defeats the entire point. This
+    feature only works once SMTP_USERNAME/SMTP_PASSWORD are actually set."""
+    _send(
+        subject="Reset your GPS Ushering admin password",
+        recipient_email=recipient_email,
+        body=f"""A password reset was requested for the GPS Ushering and Events admin panel.
+
+Reset your password here (valid for 1 hour):
+{reset_url}
+
+If you didn't request this, you can safely ignore this email — your
+password won't change unless the link above is used.
+""",
+    )
+
+
 def send_customer_edit_notification(booking: dict, recipient_email: str, manage_url: str) -> None:
     """Emails the business's own address when a customer edits their own
     booking through the self-service link, so an update doesn't sit

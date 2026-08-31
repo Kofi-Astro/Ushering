@@ -118,6 +118,23 @@ h1, h2, h3 {
   font-size: 0.85rem;
   margin-bottom: 16px;
 }
+.login-card .success {
+  color: #2f6d3a;
+  background: #f0f7ee;
+  border: 1px solid #b7d9ad;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+.login-card .forgot-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--c-text-light);
+}
+.login-card .forgot-link:hover { color: var(--c-gold); }
 
 .login-card label {
   display: block;

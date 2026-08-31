@@ -150,6 +150,33 @@ class FAQItem(Base):
     answer: Mapped[str] = mapped_column(Text)
 
 
+class AdminAuth(Base):
+    """Single-row table (id is always 1) holding whatever's needed for the
+    admin password-reset flow — see app/security.py and
+    app/admin/routers/auth.py. Doesn't exist at all until the first time
+    either a reset is requested or a password is changed via one; until
+    then, login falls back entirely to ADMIN_PASSWORD from the
+    environment (see app/config.py) exactly as before this feature
+    existed, so a fresh install works with zero extra setup.
+
+    password_hash, once set, permanently takes over from the env var
+    ADMIN_PASSWORD for that account (see security.check_credentials) —
+    it's how a self-service reset actually changes the effective
+    password, since there's no way for a running app to rewrite its own
+    environment variables.
+    """
+
+    __tablename__ = "admin_auth"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
+    password_hash: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # A random, single-use token emailed as part of the reset link
+    # (/reset-password/{token}), and its expiry — both cleared the moment
+    # a reset actually completes, or naturally ignored once expired.
+    reset_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reset_token_expires: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class SiteSetting(Base):
     """Single-row table (id is always 1) holding site-wide settings the
     business owner edits through the admin panel's Settings section —
