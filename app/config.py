@@ -48,6 +48,20 @@ class Settings(BaseSettings):
     # app/database.py for how that URL gets adapted to use psycopg (v3).
     database_url: str = "sqlite:///./bookings.db"
 
+    # Booking-notification email (see app/email_notify.py) — sent to the
+    # business's own address (site_settings.email) every time someone
+    # submits the Book Us form. Left blank by default: if either is unset,
+    # email_notify.send_booking_notification silently skips sending rather
+    # than erroring, so the booking form keeps working even before SMTP is
+    # configured. Using Gmail's SMTP server requires a 16-character "App
+    # Password" from the Google Account's Security settings (requires
+    # 2-Step Verification to be turned on first) — a regular Gmail login
+    # password will not work here.
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+
     @property
     def allowed_origins(self) -> list[str]:
         """Turns the raw FRONTEND_ORIGINS env var into the list shape
