@@ -134,17 +134,27 @@ document.addEventListener('DOMContentLoaded', () => {
     bookingForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const payload = Object.fromEntries(new FormData(bookingForm).entries());
+      let manageUrl = null;
       try {
-        await fetch('/api/bookings', {
+        const res = await fetch('/api/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
+        const data = await res.json();
+        manageUrl = data.manage_url || null;
       } catch (err) {
         /* network hiccup — the success message below is optimistic either way */
       }
       const successBox = document.querySelector('.form-success');
       if (successBox) {
+        /* The manage link is also emailed to the customer (see
+           app/email_notify.py:send_customer_confirmation), but shown here
+           too so getting it never depends on that email actually arriving. */
+        const linkHtml = manageUrl
+          ? ` <a href="${manageUrl}">Save this link</a> to view or change your booking later.`
+          : '';
+        successBox.innerHTML = `Thank you! Your booking request has been received. We'll be in touch shortly.${linkHtml}`;
         successBox.classList.add('show');
         successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }

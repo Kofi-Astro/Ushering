@@ -20,6 +20,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from ...content import get_site_settings
 from ...database import get_db
 from ...models import Booking, BookingStatus
 from ...security import require_admin
@@ -73,10 +74,23 @@ def update_status(booking_id: int, status: str = Form(...), db: Session = Depend
 @router.get("/{booking_id}/edit")
 def edit_booking_form(booking_id: int, request: Request, db: Session = Depends(get_db)):
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    # Built from settings.site_url, not this request's own host — this
+    # route is served on the admin subdomain, which is a different host
+    # entirely from where /manage-booking/{token} actually lives.
+    manage_url = None
+    if booking:
+        site_url = get_site_settings()["site_url"].rstrip("/")
+        manage_url = f"{site_url}/manage-booking/{booking.manage_token}"
     return templates.TemplateResponse(
         request,
         "admin/booking_form.html",
-        {"title": "Edit Booking", "active": "bookings", "booking": booking, "statuses": list(BookingStatus)},
+        {
+            "title": "Edit Booking",
+            "active": "bookings",
+            "booking": booking,
+            "statuses": list(BookingStatus),
+            "manage_url": manage_url,
+        },
     )
 
 

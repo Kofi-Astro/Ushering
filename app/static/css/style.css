@@ -815,6 +815,7 @@ section { padding: 90px 0; }
   font-size: 0.92rem;
 }
 .form-success.show { display: block; }
+.form-success a { color: #2f5c26; text-decoration: underline; font-weight: 600; }
 
 /* ---------- CTA banner ---------- */
 .cta-banner {

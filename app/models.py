@@ -15,6 +15,7 @@ against an empty database.
 """
 
 import enum
+import uuid
 from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, Integer, String, Text
@@ -60,6 +61,15 @@ class Booking(Base):
         Enum(BookingStatus), default=BookingStatus.new
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # An unguessable "password" a customer uses to reach their own
+    # self-service manage-booking page (see app/routers/manage_booking.py)
+    # without any real login — a plain 32-character hex UUID has 122 bits
+    # of randomness, which is not practically guessable. Generated once at
+    # booking creation and never changes; unique so it can double as a
+    # lookup key. Never displayed to anyone except the customer (via their
+    # confirmation email/the booking-success page) and the admin (for
+    # support, in case a customer loses their link).
+    manage_token: Mapped[str] = mapped_column(String(36), unique=True, default=lambda: uuid.uuid4().hex)
     # Payment tracking, filled in by the business owner as an event moves
     # forward (never set by the public booking form) — free-text strings
     # rather than a strict decimal/currency type, consistent with how

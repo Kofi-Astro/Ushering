@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero page-hero">
+  <div class="container">
+    <span class="hero-eyebrow">Your Booking</span>
+    <h1>Manage Your Booking</h1>
+    <p class="breadcrumb"><a href="/">Home</a> / Manage Your Booking</p>
+  </div>
+</section>
+
+<section>
+  <div class="container" style="max-width:640px;">
+
+    {% if not booking %}
+    <div class="booking-form">
+      <h3>We Couldn't Find This Booking</h3>
+      <p>This link may be out of date, or the booking may have been removed. If you believe this is a mistake, please reach out to us directly.</p>
+      <a href="/book-us.html" class="btn btn-wine" style="margin-top:16px;">Make a New Booking</a>
+    </div>
+
+    {% else %}
+      {% if saved %}<div class="form-success show">Your booking has been updated.</div>{% endif %}
+
+      {% if not editable %}
+      <div class="booking-form">
+        <h3>This Booking Is Already {{ booking.status.value | capitalize }}</h3>
+        <p>Once we've confirmed your event, changes go through us directly rather than this page, so nothing shifts unexpectedly after we've committed a team to it. Reach out to us on WhatsApp or by phone and we'll be glad to help.</p>
+        <div class="contact-social" style="margin-top:20px;">
+          <a href="https://wa.me/{{ settings.whatsapp_number }}" class="btn btn-wine" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Chat on WhatsApp</a>
+        </div>
+        <hr style="margin:28px 0; border:none; border-top:1px solid var(--border);">
+        <h3>Your Booking Details</h3>
+        <div class="form-row">
+          <div class="field"><label>Name</label><p>{{ booking.name }}</p></div>
+          <div class="field"><label>Phone</label><p>{{ booking.phone }}</p></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Event Type</label><p>{{ booking.event_type }}</p></div>
+          <div class="field"><label>Event Date</label><p>{{ booking.event_date or "Not provided" }}</p></div>
+        </div>
+        <div class="field"><label>Location</label><p>{{ booking.location or "Not provided" }}</p></div>
+      </div>
+
+      {% else %}
+      <div class="booking-form">
+        <h3>Update Your Details</h3>
+        <p style="margin-bottom:24px;">Your event hasn't been confirmed yet, so you're free to make changes below. Once we confirm, further changes go through us directly.</p>
+
+        <form method="post" action="/manage-booking/{{ booking.manage_token }}">
+          <div class="form-row">
+            <div class="field">
+              <label for="name">Full Name</label>
+              <input type="text" id="name" name="name" value="{{ booking.name }}" required>
+            </div>
+            <div class="field">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" name="phone" value="{{ booking.phone }}" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" value="{{ booking.email }}" required>
+            </div>
+            <div class="field">
+              <label for="event_type">Event Type</label>
+              <select id="event_type" name="event_type" required>
+                {% for t in ["Wedding", "Corporate Event", "Funeral", "Conference", "Birthday / Party", "Concert / Public Event", "Church / School Event", "Other"] %}
+                <option {{ 'selected' if booking.event_type == t }}>{{ t }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="field">
+              <label for="event_date">Event Date</label>
+              <input type="text" id="event_date" name="event_date" value="{{ booking.event_date or '' }}" placeholder="e.g. 15 Sept 2026">
+            </div>
+            <div class="field">
+              <label for="guest_count">Estimated Guest Count</label>
+              <input type="number" id="guest_count" name="guest_count" value="{{ booking.guest_count or '' }}" min="1">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="location">Event Location</label>
+            <input type="text" id="location" name="location" value="{{ booking.location or '' }}" placeholder="Venue and city/town">
+          </div>
+
+          <div class="field">
+            <label for="message">Tell Us More</label>
+            <textarea id="message" name="message" placeholder="Number of ushers needed, special requirements, etc.">{{ booking.message or '' }}</textarea>
+          </div>
+
+          <button type="submit" class="btn btn-wine">Save Changes</button>
+          <p class="form-note">We'll be notified of any changes you make here.</p>
+        </form>
+      </div>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</section>
+{% endblock %}

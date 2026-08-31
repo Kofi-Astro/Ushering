@@ -1,13 +1,18 @@
-"""Sends the business owner an email every time a customer submits the
-Book Us form — see app/routers/bookings.py, which calls
-send_booking_notification() as a FastAPI BackgroundTask so the customer's
-form submission returns immediately without waiting on an SMTP round trip.
+"""Every outgoing email the app sends, all as FastAPI BackgroundTasks so
+whichever request triggered one (a new booking, a customer editing their
+own booking) returns immediately rather than waiting on an SMTP round
+trip. See app/config.py for the SMTP_* environment variables these read.
 
 Uses Python's built-in smtplib rather than a third-party email service
 (SendGrid, Mailgun, etc.) — this is a low-volume booking form, not a bulk
 mailer, so a normal Gmail account's SMTP server is more than enough and
-needs no new paid account for the client to manage. See app/config.py for
-the SMTP_* environment variables this reads.
+needs no new paid account for the client to manage.
+
+Every function here takes `booking` as a plain dict of field values, never
+a SQLAlchemy Booking object — these run as background tasks, after the
+request's database session has already been closed, so touching an ORM
+object's attributes here could raise a detached-instance error the moment
+something tries to lazily reload them.
 """
 
 import smtplib
@@ -16,33 +21,48 @@ from email.message import EmailMessage
 from .config import get_settings
 
 
-def send_booking_notification(booking: dict, recipient_email: str) -> None:
-    """Emails a plain-text summary of a new booking to recipient_email
-    (the business's own address — site_settings.email). `booking` is a
-    plain dict of field values (see app/routers/bookings.py's call site),
-    not a SQLAlchemy Booking object — this runs as a FastAPI background
-    task, after the request's database session has already been closed,
-    so touching an ORM object's attributes here could raise a detached-
-    instance error the moment something tries to lazily reload them.
-
-    Does nothing (and never raises) if SMTP isn't configured yet, so the
-    booking form works fine before the developer sets up
-    SMTP_USERNAME/SMTP_PASSWORD, and a delivery failure never surfaces as
-    an error to the customer who just submitted the form — there's no
-    response left to report a failure through by the time this runs. Any
-    error is printed to the server log so it's still visible to whoever's
-    watching deploy logs.
+def _send(subject: str, recipient_email: str, body: str) -> None:
+    """Shared send path for every function below. Does nothing (and never
+    raises) if SMTP isn't configured yet, so every feature that emails
+    someone keeps working — minus the email — before the developer sets
+    up SMTP_USERNAME/SMTP_PASSWORD. A delivery failure never surfaces to
+    whoever triggered it, since there's no response left to report it
+    through by the time this runs in the background; it's printed to the
+    server log instead, flushed immediately so it shows up promptly in
+    Railway's log stream rather than sitting in Python's stdout buffer.
     """
     settings = get_settings()
     if not settings.smtp_username or not settings.smtp_password:
         return
 
     message = EmailMessage()
-    message["Subject"] = f"New booking inquiry — {booking['name']} ({booking['event_type']})"
+    message["Subject"] = subject
     message["From"] = settings.smtp_username
     message["To"] = recipient_email
-    message.set_content(
-        f"""A new booking inquiry just came in through the website:
+    message.set_content(body)
+
+    try:
+        # A short, explicit timeout so a network hiccup (or a host that
+        # silently drops outbound SMTP traffic) fails fast in the
+        # background rather than leaving the task hanging indefinitely.
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(settings.smtp_username, settings.smtp_password)
+            server.send_message(message)
+    except Exception as exc:
+        print(f"[email_notify] Failed to send to {recipient_email!r}: {exc}", flush=True)
+
+
+def send_booking_notification(booking: dict, recipient_email: str, manage_url: str) -> None:
+    """Emails the business's own address (site_settings.email) every time
+    a customer submits the Book Us form. manage_url is included so staff
+    can jump straight to the customer's own self-service page (e.g. to see
+    exactly what the customer sees, or resend the link if asked) — the
+    admin panel's own edit page is still the normal way to make changes."""
+    _send(
+        subject=f"New booking inquiry — {booking['name']} ({booking['event_type']})",
+        recipient_email=recipient_email,
+        body=f"""A new booking inquiry just came in through the website:
 
 Name: {booking['name']}
 Phone: {booking['phone']}
@@ -56,18 +76,58 @@ Message:
 {booking['message'] or "(none)"}
 
 Log in to the admin panel to view and manage this booking.
-"""
+Customer's own self-service link (for reference/support): {manage_url}
+""",
     )
 
-    try:
-        # A short, explicit timeout so a network hiccup (or a host that
-        # silently drops outbound SMTP traffic) fails fast in the
-        # background rather than leaving the task hanging indefinitely.
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(settings.smtp_username, settings.smtp_password)
-            server.send_message(message)
-    except Exception as exc:
-        # flush=True so this actually shows up promptly in Railway's log
-        # stream rather than sitting in Python's stdout buffer.
-        print(f"[email_notify] Failed to send booking notification: {exc}", flush=True)
+
+def send_customer_confirmation(booking: dict, recipient_email: str, manage_url: str) -> None:
+    """Emails the customer a confirmation of what they submitted, plus
+    their personal manage_url — the only way (besides the one shown right
+    after submitting the form) they'll ever get this link, since there's
+    no customer login for them to retrieve it from later."""
+    _send(
+        subject="We've received your booking request",
+        recipient_email=recipient_email,
+        body=f"""Hi {booking['name']},
+
+Thanks for booking with GPS Ushering and Events! Here's what we received:
+
+Event type: {booking['event_type']}
+Event date: {booking['event_date'] or "Not provided"}
+Guest count: {booking['guest_count'] or "Not provided"}
+Location: {booking['location'] or "Not provided"}
+
+We'll be in touch shortly to confirm the details.
+
+Need to change something before we confirm? Use your personal booking link:
+{manage_url}
+
+(Keep this link private — anyone with it can view or edit this booking.
+Once we've confirmed your event, changes go through us directly.)
+""",
+    )
+
+
+def send_customer_edit_notification(booking: dict, recipient_email: str, manage_url: str) -> None:
+    """Emails the business's own address when a customer edits their own
+    booking through the self-service link, so an update doesn't sit
+    unnoticed until the next time someone happens to open the admin panel."""
+    _send(
+        subject=f"Booking updated by customer — {booking['name']} ({booking['event_type']})",
+        recipient_email=recipient_email,
+        body=f"""{booking['name']} just updated their own booking details:
+
+Phone: {booking['phone']}
+Email: {booking['email']}
+Event type: {booking['event_type']}
+Event date: {booking['event_date'] or "Not provided"}
+Guest count: {booking['guest_count'] or "Not provided"}
+Location: {booking['location'] or "Not provided"}
+
+Message:
+{booking['message'] or "(none)"}
+
+Log in to the admin panel to review: {manage_url}
+""",
+    )

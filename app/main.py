@@ -24,7 +24,7 @@ from starlette.routing import Host
 from .admin import admin_app
 from .config import get_settings
 from .database import Base, SessionLocal, engine
-from .routers import bookings, pages
+from .routers import bookings, manage_booking, pages
 from .seed import seed_if_empty
 
 settings = get_settings()
@@ -74,6 +74,10 @@ app.include_router(pages.router)
 # unauthenticated on purpose (it's how a visitor submits an inquiry) — see
 # app/routers/bookings.py for the spam-honeypot handling.
 app.include_router(bookings.router)
+# A customer's own self-service page for their booking (GET/POST
+# /manage-booking/{token}) — also public, "authenticated" only by knowing
+# the unguessable token in their own link. See app/routers/manage_booking.py.
+app.include_router(manage_booking.router)
 
 # The admin panel (bookings + all content management) is a SEPARATE
 # FastAPI app — see app/admin/__init__.py — served on its own hostname:
