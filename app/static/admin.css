@@ -14,6 +14,11 @@
   --c-gold-light: #e4c860;
   --c-wine: #6d0e23;
   --c-wine-dark: #4a0918;
+  /* See the matching comment in static/css/style.css — navy was added
+     alongside wine after the client's real logo turned out to be gold +
+     navy rather than gold + burgundy. Blended into the same gradients and
+     alternating accents here so the admin panel stays visually identical
+     in spirit to the public site. */
   --c-navy: #16294f;
   --c-navy-dark: #0d1a34;
   --c-text: #2a2a2a;
@@ -350,6 +355,8 @@ h1, h2, h3 {
   flex-shrink: 0;
   font-size: 1.05rem;
 }
+/* Alternates every other dashboard row between navy and wine — same
+   reasoning as the --c-navy comment near the top of this file. */
 .item-row:nth-child(even) .item-thumb { background: linear-gradient(150deg, var(--c-navy), var(--c-black)); }
 .item-row:nth-child(even) .item-icon { color: var(--c-navy); }
 .item-row .item-body { flex: 1; min-width: 0; }

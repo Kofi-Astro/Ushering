@@ -1,6 +1,6 @@
 /* ==========================================================================
    GPS Ushering and Events — Global Stylesheet
-   Brand: Black / Gold / Burgundy(Wine) / White — Modern, Elegant, Luxury
+   Brand: Black / Gold / Burgundy(Wine) / Navy / White — Modern, Elegant, Luxury
    ========================================================================== */
 
 :root {
@@ -12,6 +12,13 @@
   --c-gold-light: #e4c860;
   --c-wine: #6d0e23;
   --c-wine-dark: #4a0918;
+  /* Sampled from the client's actual logo artwork (images/gsp.png), which
+     turned out to be gold + navy rather than gold + burgundy like the
+     original brand brief. Rather than replace wine outright or ignore the
+     mismatch, navy was blended in as a third accent color alongside it —
+     see every gradient below that lists both var(--c-navy) and
+     var(--c-wine), plus the nth-child(even) overrides further down that
+     alternate repeated cards/icons between the two. */
   --c-navy: #16294f;
   --c-navy-dark: #0d1a34;
   --c-text: #2a2a2a;
@@ -450,6 +457,9 @@ section { padding: 90px 0; }
   font-size: 1.4rem;
   margin: 0 auto 18px;
 }
+/* Alternates every other icon between navy and wine (see the --c-navy
+   comment near the top of this file) so both brand accents show up
+   together rather than one being buried under the other. */
 .value-card:nth-child(even) .value-icon {
   background: linear-gradient(135deg, var(--c-navy), var(--c-black));
 }
@@ -647,6 +657,7 @@ section { padding: 90px 0; }
   font-weight: 700;
   flex-shrink: 0;
 }
+/* Same navy/wine alternation as .value-card above. */
 .testi-card:nth-child(even) .testi-avatar {
   background: linear-gradient(135deg, var(--c-navy), var(--c-black));
 }
@@ -847,6 +858,12 @@ section { padding: 90px 0; }
   transition: all var(--transition);
 }
 .footer-social a:hover { background: var(--c-gold); border-color: var(--c-gold); color: var(--c-black); }
+/* Visible "Label · @handle" line per connected account, below the icon
+   row — structural pattern (gold uppercase label, dot separator, muted
+   value) taken from a previous project (blushcloset.xyz) at the client's
+   request, but using only this site's own color tokens, not blushcloset's
+   palette. The handle text itself is derived from the account's URL in
+   app/content.py:_handle_from_url — see templates/partials/footer.html. */
 .footer-handles {
   margin-top: 16px;
   padding-top: 14px;
