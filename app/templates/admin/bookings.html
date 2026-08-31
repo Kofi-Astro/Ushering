@@ -35,6 +35,13 @@
     <div><strong>Submitted:</strong> {{ b.created_at.strftime('%d %b %Y, %H:%M') }}</div>
   </div>
   {% if b.message %}<p class="booking-message">{{ b.message }}</p>{% endif %}
+  {% if b.amount_charged or b.deposit_paid or b.full_payment_date %}
+  <div class="booking-details booking-payment">
+    {% if b.amount_charged %}<div><strong>Charged:</strong> {{ b.amount_charged }}</div>{% endif %}
+    {% if b.deposit_paid %}<div><strong>Deposit Paid:</strong> {{ b.deposit_paid }}</div>{% endif %}
+    {% if b.full_payment_date %}<div><strong>Fully Paid:</strong> {{ b.full_payment_date }}</div>{% else %}<div><strong>Fully Paid:</strong> Not yet</div>{% endif %}
+  </div>
+  {% endif %}
   <div class="booking-actions">
     <form method="post" action="/bookings/{{ b.id }}/status" class="status-form">
       <select name="status">
@@ -46,9 +53,12 @@
       </select>
       <button type="submit">Update</button>
     </form>
-    <form method="post" action="/bookings/{{ b.id }}/delete" onsubmit="return confirm('Delete this booking? This cannot be undone.');">
-      <button type="submit" class="btn-danger">Delete</button>
-    </form>
+    <div style="display:flex; gap:10px;">
+      <a href="/bookings/{{ b.id }}/edit" class="btn-secondary">Edit</a>
+      <form method="post" action="/bookings/{{ b.id }}/delete" onsubmit="return confirm('Delete this booking? This cannot be undone.');">
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+    </div>
   </div>
 </div>
 {% endfor %}

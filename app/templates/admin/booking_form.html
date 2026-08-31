@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Edit Booking</h2>
+  <a href="/bookings" class="btn-secondary">Back to Bookings</a>
+</div>
+
+<div class="form-card">
+  <form method="post" action="/bookings/{{ booking.id }}/edit">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value="{{ booking.name }}" required>
+    </div>
+    <div class="field">
+      <label for="phone">Phone</label>
+      <input type="text" id="phone" name="phone" value="{{ booking.phone }}" required>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ booking.email }}" required>
+    </div>
+    <div class="field">
+      <label for="event_type">Event Type</label>
+      <input type="text" id="event_type" name="event_type" value="{{ booking.event_type }}" required>
+    </div>
+    <div class="field">
+      <label for="event_date">Event Date</label>
+      <input type="text" id="event_date" name="event_date" value="{{ booking.event_date or '' }}" placeholder="e.g. 15 Sept 2026">
+    </div>
+    <div class="field">
+      <label for="guest_count">Guest Count</label>
+      <input type="text" id="guest_count" name="guest_count" value="{{ booking.guest_count or '' }}">
+    </div>
+    <div class="field">
+      <label for="location">Location</label>
+      <input type="text" id="location" name="location" value="{{ booking.location or '' }}">
+    </div>
+    <div class="field">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="4">{{ booking.message or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        {% for s in statuses %}
+        <option value="{{ s.value }}" {{ 'selected' if booking.status == s }}>{{ s.value | capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="section-toolbar" style="margin-top:28px;">
+      <h3 style="margin:0;">Payment</h3>
+    </div>
+    <div class="field">
+      <label for="amount_charged">Amount Charged</label>
+      <input type="text" id="amount_charged" name="amount_charged" value="{{ booking.amount_charged or '' }}" placeholder="e.g. GHS 1,500">
+      <p class="hint">The total agreed price for this event.</p>
+    </div>
+    <div class="field">
+      <label for="deposit_paid">Deposit Paid</label>
+      <input type="text" id="deposit_paid" name="deposit_paid" value="{{ booking.deposit_paid or '' }}" placeholder="e.g. GHS 500">
+    </div>
+    <div class="field">
+      <label for="full_payment_date">Full Payment Date</label>
+      <input type="date" id="full_payment_date" name="full_payment_date" value="{{ booking.full_payment_date or '' }}">
+      <p class="hint">Leave blank until the balance is fully settled.</p>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save Booking</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

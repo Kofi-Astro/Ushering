@@ -483,6 +483,11 @@ h1, h2, h3 {
   margin-bottom: 12px;
 }
 .booking-details a { color: var(--c-wine); }
+.booking-payment {
+  border-top: 1px dashed var(--c-border);
+  padding-top: 10px;
+  margin-top: -4px;
+}
 
 .booking-message {
   font-size: 0.9rem;

@@ -38,8 +38,11 @@ class BookingStatus(str, enum.Enum):
 
 class Booking(Base):
     """One row per Book Us form submission. Created by
-    app/routers/bookings.py; everything else (reading the list, updating
-    status) happens in app/admin/routers/bookings.py."""
+    app/routers/bookings.py (customer-submitted fields only); everything
+    else — reading the list, editing any field, updating status, deleting,
+    and the payment-tracking fields below — happens in
+    app/admin/routers/bookings.py, since only the business owner ever
+    needs to touch those."""
 
     __tablename__ = "bookings"
 
@@ -57,6 +60,19 @@ class Booking(Base):
         Enum(BookingStatus), default=BookingStatus.new
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    # Payment tracking, filled in by the business owner as an event moves
+    # forward (never set by the public booking form) — free-text strings
+    # rather than a strict decimal/currency type, consistent with how
+    # guest_count is also just a string here: nothing in this app does
+    # arithmetic on these, they're only ever displayed, so there's no
+    # benefit to a rigid numeric type and it lets the owner write "GHS
+    # 1,500" or "1500 cedis" or whatever's natural rather than fighting a
+    # strict number field.
+    amount_charged: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    deposit_paid: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # A plain string date (e.g. "2026-09-15"), same convention as
+    # event_date above, filled in once the customer completes payment.
+    full_payment_date: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
 
 class Service(Base):

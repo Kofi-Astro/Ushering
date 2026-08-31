@@ -1,8 +1,12 @@
 """The admin panel's Bookings section — lists every Book Us submission,
 filterable by status, with a per-row form to move a booking through the
-new -> contacted -> confirmed -> completed (or cancelled) workflow, plus a
-delete button for clearing out entries the business owner no longer needs
-to keep around (spam/test submissions, old cancelled bookings, etc.).
+new -> contacted -> confirmed -> completed (or cancelled) workflow, a full
+edit page for changing any of the customer's original details (a customer
+might call to move their event date, add guests, etc.) and recording
+payment progress (amount charged, deposit paid, when full payment came
+in), and a delete button for clearing out entries the business owner no
+longer needs to keep around (spam/test submissions, old cancelled
+bookings, etc.).
 
 There's no create here — bookings are only ever created by the public
 form (app/routers/bookings.py).
@@ -62,6 +66,59 @@ def update_status(booking_id: int, status: str = Form(...), db: Session = Depend
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking:
         booking.status = BookingStatus(status)
+        db.commit()
+    return RedirectResponse(url="/bookings", status_code=303)
+
+
+@router.get("/{booking_id}/edit")
+def edit_booking_form(booking_id: int, request: Request, db: Session = Depends(get_db)):
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    return templates.TemplateResponse(
+        request,
+        "admin/booking_form.html",
+        {"title": "Edit Booking", "active": "bookings", "booking": booking, "statuses": list(BookingStatus)},
+    )
+
+
+@router.post("/{booking_id}/edit")
+def update_booking(
+    booking_id: int,
+    name: str = Form(...),
+    phone: str = Form(...),
+    email: str = Form(...),
+    event_type: str = Form(...),
+    event_date: str = Form(""),
+    guest_count: str = Form(""),
+    location: str = Form(""),
+    message: str = Form(""),
+    status: str = Form(...),
+    amount_charged: str = Form(""),
+    deposit_paid: str = Form(""),
+    full_payment_date: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    """Handles the full edit form (admin/booking_form.html) — every field
+    the customer originally submitted, plus status and the payment-
+    tracking fields, all in one save. Optional text fields come in as
+    empty strings from unfilled form inputs rather than None, so they're
+    normalized to None below to match how the public booking form stores
+    "not provided" (see app/routers/bookings.py) — keeps the two write
+    paths consistent rather than one using "" and the other using null
+    for the same "nothing here" meaning."""
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if booking:
+        booking.name = name
+        booking.phone = phone
+        booking.email = email
+        booking.event_type = event_type
+        booking.event_date = event_date or None
+        booking.guest_count = guest_count or None
+        booking.location = location or None
+        booking.message = message or None
+        booking.status = BookingStatus(status)
+        booking.amount_charged = amount_charged or None
+        booking.deposit_paid = deposit_paid or None
+        booking.full_payment_date = full_payment_date or None
         db.commit()
     return RedirectResponse(url="/bookings", status_code=303)
 
