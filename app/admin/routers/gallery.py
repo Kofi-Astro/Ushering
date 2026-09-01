@@ -9,6 +9,14 @@ local dev, but Railway's default filesystem is ephemeral — a redeploy can
 wipe it. Attach a Railway volume mounted at images/uploads/, or move this
 to object storage (e.g. Cloudflare R2), before relying on this in
 production.
+
+Videos are handled differently: by URL only (YouTube, Vimeo, or a direct
+video file hosted elsewhere), never by uploading a video file through
+this form. Video files are typically far larger than photos, and the
+same ephemeral-disk caveat above would turn into a much bigger problem —
+filling the disk fast and losing the "upload" on the next redeploy. The
+`photo` file field is still accepted for a video row, but it's reused as
+an optional poster/thumbnail image rather than the video itself.
 """
 
 import uuid
@@ -31,6 +39,7 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / 
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent.parent / "images" / "uploads"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 CATEGORIES = ["weddings", "corporate", "funerals", "conferences", "parties"]
+MEDIA_TYPES = ["image", "video"]
 
 
 def _save_upload(file: UploadFile | None) -> str | None:
@@ -63,12 +72,13 @@ def list_gallery(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/new")
 def new_gallery_form(request: Request):
-    """Blank add-photo form. `categories` is passed in so the template can
-    render the category <select> options without hardcoding them twice."""
+    """Blank add-photo/video form. `categories`/`media_types` are passed
+    in so the template can render both <select>s without hardcoding
+    either list twice."""
     return templates.TemplateResponse(
         request,
         "admin/gallery_form.html",
-        {"title": "Add Photo", "active": "gallery", "item": None, "categories": CATEGORIES},
+        {"title": "Add Photo or Video", "active": "gallery", "item": None, "categories": CATEGORIES, "media_types": MEDIA_TYPES},
     )
 
 
@@ -77,14 +87,30 @@ def create_gallery_item(
     label: str = Form(...),
     category: str = Form(...),
     order: int = Form(1),
+    media_type: str = Form("image"),
+    video_url: str = Form(""),
+    is_hero: str | None = Form(None),
     photo: UploadFile | None = None,
     db: Session = Depends(get_db),
 ):
-    """Handles the add-photo form submit. The photo is optional — leaving
-    it empty on creation just means the tile shows a placeholder icon
-    until edited later with a real photo."""
+    """Handles the add form submit. `photo` is optional either way —
+    for an image row it's the photo itself (placeholder icon until
+    uploaded); for a video row it's an optional poster (see this file's
+    module docstring for why video itself is URL-only)."""
+    if media_type not in MEDIA_TYPES:
+        media_type = "image"
     image_path = _save_upload(photo) or ""
-    db.add(GalleryItem(label=label, category=category, order=order, image=image_path))
+    db.add(
+        GalleryItem(
+            label=label,
+            category=category,
+            order=order,
+            image=image_path,
+            media_type=media_type,
+            video_url=(video_url.strip() or None) if media_type == "video" else None,
+            is_hero=bool(is_hero) if media_type == "video" else False,
+        )
+    )
     db.commit()
     return RedirectResponse(url="/gallery", status_code=303)
 
@@ -97,7 +123,7 @@ def edit_gallery_form(item_id: int, request: Request, db: Session = Depends(get_
     return templates.TemplateResponse(
         request,
         "admin/gallery_form.html",
-        {"title": "Edit Photo", "active": "gallery", "item": item, "categories": CATEGORIES},
+        {"title": "Edit Photo or Video", "active": "gallery", "item": item, "categories": CATEGORIES, "media_types": MEDIA_TYPES},
     )
 
 
@@ -107,18 +133,26 @@ def update_gallery_item(
     label: str = Form(...),
     category: str = Form(...),
     order: int = Form(1),
+    media_type: str = Form("image"),
+    video_url: str = Form(""),
+    is_hero: str | None = Form(None),
     photo: UploadFile | None = None,
     db: Session = Depends(get_db),
 ):
-    """Handles the edit form's submit. Uploading a new photo replaces the
-    old path; leaving the file field empty (the common case — editing
-    just the caption or category) keeps the existing photo untouched,
-    since _save_upload returns None when nothing was chosen."""
+    """Handles the edit form's submit. Uploading a new photo/poster
+    replaces the old one; leaving the file field empty keeps whatever's
+    already stored, since _save_upload returns None when nothing was
+    chosen."""
+    if media_type not in MEDIA_TYPES:
+        media_type = "image"
     item = db.query(GalleryItem).filter(GalleryItem.id == item_id).first()
     if item:
         item.label = label
         item.category = category
         item.order = order
+        item.media_type = media_type
+        item.video_url = (video_url.strip() or None) if media_type == "video" else None
+        item.is_hero = bool(is_hero) if media_type == "video" else False
         new_image = _save_upload(photo)
         if new_image:
             item.image = new_image

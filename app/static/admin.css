@@ -390,6 +390,20 @@ h1, h2, h3 {
   border-radius: 20px;
   flex-shrink: 0;
 }
+.type-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  margin-left: 8px;
+  background: var(--c-navy);
+  color: var(--c-white);
+  vertical-align: middle;
+}
+.type-badge.hero { background: var(--c-gold); color: var(--c-black); }
 
 /* ---------- Forms ---------- */
 .form-card {
@@ -409,6 +423,13 @@ h1, h2, h3 {
   color: var(--c-black);
 }
 .form-card .hint { font-size: 0.78rem; color: var(--c-text-light); margin-top: 5px; }
+.form-card label.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+.form-card label.checkbox-label input[type="checkbox"] { width: auto; margin: 0; }
 .form-card input,
 .form-card select,
 .form-card textarea {

@@ -73,23 +73,85 @@ def get_testimonials() -> list[dict]:
         ]
 
 
+_YOUTUBE_RE = re.compile(r"(?:youtu\.be/|youtube\.com/(?:watch\?v=|embed/|shorts/))([\w-]{11})")
+_VIMEO_RE = re.compile(r"vimeo\.com/(?:video/)?(\d+)")
+_VIDEO_FILE_EXTENSIONS = (".mp4", ".webm", ".ogg", ".mov")
+
+
+def _analyze_video_url(video_url: str | None) -> dict:
+    """Classifies a GalleryItem's video_url into exactly one playback
+    strategy, so templates never parse URLs themselves:
+      - a direct file link (.mp4/.webm/.ogg/.mov) plays in a plain
+        <video> tag (`direct_src`)
+      - a YouTube or Vimeo link plays in an <iframe> embed (`embed_url`),
+        and YouTube additionally gets a real thumbnail (`thumb_url`)
+        instead of the generic placeholder icon
+      - anything unrecognized (or blank) plays nothing, same as if
+        video_url were never set
+    """
+    url = (video_url or "").strip()
+    if not url:
+        return {"direct_src": None, "embed_url": None, "thumb_url": None}
+    if url.lower().split("?")[0].endswith(_VIDEO_FILE_EXTENSIONS):
+        return {"direct_src": url, "embed_url": None, "thumb_url": None}
+    youtube_match = _YOUTUBE_RE.search(url)
+    if youtube_match:
+        video_id = youtube_match.group(1)
+        return {
+            "direct_src": None,
+            "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}",
+            "thumb_url": f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg",
+        }
+    vimeo_match = _VIMEO_RE.search(url)
+    if vimeo_match:
+        return {
+            "direct_src": None,
+            "embed_url": f"https://player.vimeo.com/video/{vimeo_match.group(1)}",
+            "thumb_url": None,
+        }
+    return {"direct_src": None, "embed_url": None, "thumb_url": None}
+
+
+def _gallery_item_dict(g: GalleryItem) -> dict:
+    video = _analyze_video_url(g.video_url) if g.media_type == "video" else _analyze_video_url(None)
+    return {
+        "id": g.id,
+        "label": g.label,
+        "category": g.category,
+        "order": g.order,
+        "image": g.image,
+        "media_type": g.media_type,
+        "is_hero": g.is_hero,
+        **video,
+    }
+
+
 def get_gallery_items() -> list[dict]:
-    """All gallery photos, ordered for display. `image` is either a path
-    under /images/uploads/ (once a real photo's been uploaded through the
-    admin panel) or an empty string, which the gallery template treats as
-    "show the placeholder icon tile instead"."""
+    """All gallery tiles (photos and videos), ordered for display. `image`
+    is either a path under /images/uploads/ (once uploaded through the
+    admin panel) or an empty string; for a video row it's an optional
+    poster image rather than the primary media — see
+    app/models.py:GalleryItem's docstring."""
     with SessionLocal() as db:
         rows = db.query(GalleryItem).order_by(GalleryItem.order).all()
-        return [
-            {
-                "id": g.id,
-                "label": g.label,
-                "category": g.category,
-                "order": g.order,
-                "image": g.image,
-            }
-            for g in rows
-        ]
+        return [_gallery_item_dict(g) for g in rows]
+
+
+def get_hero_video() -> dict | None:
+    """The video (if any) marked "Feature as hero video" in the admin
+    Gallery section, used as the homepage hero's background/CTA media
+    (see app/routers/pages.py:home and templates/pages/index.html). If
+    more than one is marked, the lowest `order` wins, so which one shows
+    is a deliberate admin choice rather than something that flips between
+    page loads."""
+    with SessionLocal() as db:
+        row = (
+            db.query(GalleryItem)
+            .filter(GalleryItem.media_type == "video", GalleryItem.is_hero.is_(True))
+            .order_by(GalleryItem.order)
+            .first()
+        )
+        return _gallery_item_dict(row) if row else None
 
 
 def get_faqs() -> list[dict]:

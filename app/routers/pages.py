@@ -77,6 +77,11 @@ def home(request: Request):
         base_context(
             request,
             nav="home",
+            # Lets the homepage's own gallery preview tiles open in the
+            # same full-screen lightbox as the Gallery page (see
+            # templates/base.html and static/js/main.js) — needed now that
+            # those tiles can be real photos/videos, not just icons.
+            lightbox=True,
             title="GPS Ushering and Events | Professional Ushers in Accra, Ghana",
             description="GPS Ushering and Events provides professional ushering and event support services across Ghana — weddings, corporate events, funerals, conferences, birthdays and concerts. Book trusted, elegant ushers today.",
             keywords="ushering services in Ghana, professional ushers in Accra, event ushers Ghana, corporate ushering services, wedding ushers in Accra, event staffing Ghana, hospitality staff Ghana, event support services Ghana, guest coordination services, ushering company Ghana, hire ushers Ghana, event management support",
@@ -84,6 +89,7 @@ def home(request: Request):
             services=content.get_services()[:6],
             gallery_items=content.get_gallery_items()[:3],
             testimonials=content.get_testimonials()[:3],
+            hero_video=content.get_hero_video(),
         ),
     )
 

@@ -2,11 +2,11 @@
 {% block content %}
 <div class="section-toolbar">
   <h2>Gallery</h2>
-  <a href="/gallery/new" class="btn-primary"><i class="fas fa-plus"></i> Add Photo</a>
+  <a href="/gallery/new" class="btn-primary"><i class="fas fa-plus"></i> Add Photo or Video</a>
 </div>
 
 {% if items|length == 0 %}
-<p class="empty">No gallery photos yet.</p>
+<p class="empty">No gallery photos or videos yet.</p>
 {% endif %}
 
 <div class="item-list">
@@ -15,16 +15,27 @@
     {% if item.image %}
     <img class="item-thumb" src="{{ item.image }}" alt="{{ item.label }}">
     {% else %}
-    <div class="item-thumb"><i class="fas fa-image"></i></div>
+    <div class="item-thumb"><i class="fas {{ 'fa-video' if item.media_type == 'video' else 'fa-image' }}"></i></div>
     {% endif %}
     <div class="item-body">
-      <div class="item-title">{{ item.label }}</div>
-      <div class="item-meta">{{ item.category }}{% if not item.image %} · no photo uploaded yet{% endif %}</div>
+      <div class="item-title">
+        {{ item.label }}
+        {% if item.media_type == 'video' %}<span class="type-badge">Video</span>{% endif %}
+        {% if item.is_hero %}<span class="type-badge hero">Hero</span>{% endif %}
+      </div>
+      <div class="item-meta">
+        {{ item.category }}
+        {% if item.media_type == 'video' %}
+          {% if not item.video_url %} · no video URL set yet{% endif %}
+        {% elif not item.image %}
+          · no photo uploaded yet
+        {% endif %}
+      </div>
     </div>
     <span class="order-badge">#{{ item.order }}</span>
     <div class="item-actions">
       <a href="/gallery/{{ item.id }}/edit" class="btn-secondary">Edit</a>
-      <form method="post" action="/gallery/{{ item.id }}/delete" onsubmit="return confirm('Delete this photo?');">
+      <form method="post" action="/gallery/{{ item.id }}/delete" onsubmit="return confirm('Delete this item?');">
         <button type="submit" class="btn-danger">Delete</button>
       </form>
     </div>

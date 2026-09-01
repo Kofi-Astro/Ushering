@@ -9,10 +9,11 @@
 </section>
 
 <!--
-  Each gallery entry lives in content/gallery/*.md and can be managed from
-  /content-admin. Once a real photo is uploaded through the CMS, `image` will
-  hold a path under /images/uploads/ and render as a real photo below instead
-  of the placeholder icon tile.
+  Each gallery entry is managed from the admin panel's Gallery section
+  (app/admin/routers/gallery.py). `image` holds a path under
+  /images/uploads/ once uploaded; `media_type` is "image" or "video" —
+  see app/models.py:GalleryItem and app/content.py for how a video's
+  video_url is classified into direct_src/embed_url/thumb_url.
 -->
 <section>
   <div class="container">
@@ -27,11 +28,24 @@
 
     <div class="gallery-grid">
       {% for item in gallery_items %}
-      <div class="gallery-item" data-category="{{ item.category }}" data-label="{{ item.label }}">
-        {% if item.image %}
-        <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+      <div class="gallery-item" data-category="{{ item.category }}" data-label="{{ item.label }}" data-type="{{ item.media_type }}"
+           {% if item.media_type == 'video' %}data-direct-src="{{ item.direct_src or '' }}" data-embed-src="{{ item.embed_url or '' }}"{% else %}data-image-src="{{ item.image or '' }}"{% endif %}>
+        {% if item.media_type == 'video' %}
+          {% if item.image %}
+          <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+          <span class="play-badge"><i class="fas fa-play"></i></span>
+          {% elif item.thumb_url %}
+          <img src="{{ item.thumb_url }}" alt="{{ item.label }}" loading="lazy">
+          <span class="play-badge"><i class="fas fa-play"></i></span>
+          {% else %}
+          <i class="fas fa-video"></i>
+          {% endif %}
         {% else %}
-        <i class="fas fa-image"></i>
+          {% if item.image %}
+          <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+          {% else %}
+          <i class="fas fa-image"></i>
+          {% endif %}
         {% endif %}
       </div>
       {% endfor %}

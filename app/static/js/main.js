@@ -103,26 +103,62 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* Gallery lightbox: clicking any tile opens the full-screen overlay
-     (only present on the Gallery page — see the `lightbox=True` flag in
-     app/routers/pages.py:gallery_page) and shows that tile's caption.
-     Closes via the explicit close button, or by clicking the dark
-     backdrop itself (the `e.target === lightbox` check distinguishes a
-     click on the backdrop from a click bubbling up from its contents). */
+  /* Gallery lightbox: clicking any tile (or a "Watch Highlights"-style
+     trigger button, see templates/pages/index.html's hero section) opens
+     the full-screen overlay (present on the Gallery page and the Home
+     page — see the `lightbox=True` flag in app/routers/pages.py) and
+     plays that item's actual media, built from its data-* attributes
+     (data-type is "image" or "video"; a video has either data-direct-src
+     for a plain <video> or data-embed-src for a YouTube/Vimeo <iframe> —
+     see app/content.py's _analyze_video_url). Elements are built with
+     plain DOM APIs (not innerHTML) so a caption or embed URL an admin
+     typed into the gallery form can never be interpreted as markup.
+     Closes via the explicit close button or the dark backdrop itself
+     (the `e.target === lightbox` check distinguishes a click on the
+     backdrop from one bubbling up from its contents) — either way the
+     media is removed immediately so a playing video/audio actually stops. */
   const lightbox = document.querySelector('.lightbox');
   if (lightbox) {
     const lightboxCaption = lightbox.querySelector('.lightbox-caption');
-    galleryItems.forEach((item) => {
+    const lightboxBox = lightbox.querySelector('.lightbox-box');
+    const lightboxTriggers = document.querySelectorAll('.gallery-item, .lightbox-trigger');
+    const closeLightbox = () => {
+      lightbox.classList.remove('open');
+      lightboxBox.innerHTML = '';
+    };
+    lightboxTriggers.forEach((item) => {
       item.addEventListener('click', () => {
         lightboxCaption.textContent = item.dataset.label || '';
+        lightboxBox.innerHTML = '';
+        if (item.dataset.type === 'video' && item.dataset.directSrc) {
+          const video = document.createElement('video');
+          video.src = item.dataset.directSrc;
+          video.controls = true;
+          video.autoplay = true;
+          video.playsInline = true;
+          lightboxBox.appendChild(video);
+        } else if (item.dataset.type === 'video' && item.dataset.embedSrc) {
+          const iframe = document.createElement('iframe');
+          iframe.src = item.dataset.embedSrc + '?autoplay=1';
+          iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+          iframe.allowFullscreen = true;
+          lightboxBox.appendChild(iframe);
+        } else if (item.dataset.type !== 'video' && item.dataset.imageSrc) {
+          const img = document.createElement('img');
+          img.src = item.dataset.imageSrc;
+          img.alt = item.dataset.label || '';
+          lightboxBox.appendChild(img);
+        } else {
+          const icon = document.createElement('i');
+          icon.className = item.dataset.type === 'video' ? 'fas fa-video' : 'fas fa-image';
+          lightboxBox.appendChild(icon);
+        }
         lightbox.classList.add('open');
       });
     });
-    lightbox.querySelector('.lightbox-close').addEventListener('click', () => {
-      lightbox.classList.remove('open');
-    });
+    lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) lightbox.classList.remove('open');
+      if (e.target === lightbox) closeLightbox();
     });
   }
 

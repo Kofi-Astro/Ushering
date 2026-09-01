@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero">
+<!--
+  hero_video (see app/content.py:get_hero_video) is the one GalleryItem,
+  if any, an admin marked "Feature as hero video". A direct video file
+  plays full-bleed behind this section (hero-bg-video below); a
+  YouTube/Vimeo link instead shows a "Watch" button that opens it in the
+  same lightbox the Gallery page uses — a true autoplaying background
+  loop isn't reliable for an embedded iframe, so this doesn't try to fake it.
+-->
+<section class="hero{% if hero_video and hero_video.direct_src %} hero-has-video{% endif %}">
+  {% if hero_video and hero_video.direct_src %}
+  <video class="hero-bg-video" autoplay muted loop playsinline {% if hero_video.image %}poster="{{ hero_video.image }}"{% endif %}>
+    <source src="{{ hero_video.direct_src }}" type="video/mp4">
+  </video>
+  {% endif %}
   <div class="container">
     <span class="hero-eyebrow">Ushering &amp; Event Support Services</span>
     <h1>Elegant, Reliable Ushering for Your Most Important Events</h1>
@@ -8,6 +21,11 @@
     <div class="hero-buttons">
       <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
       <a href="/services.html" class="btn btn-outline">View Our Services</a>
+      {% if hero_video and hero_video.embed_url %}
+      <button type="button" class="btn btn-outline lightbox-trigger" data-label="{{ hero_video.label }}" data-type="video" data-embed-src="{{ hero_video.embed_url }}">
+        <i class="fas fa-circle-play"></i> Watch Highlights
+      </button>
+      {% endif %}
     </div>
     <div class="hero-stats">
       <div>
@@ -78,7 +96,26 @@
     </div>
     <div class="gallery-grid">
       {% for item in gallery_items %}
-      <div class="gallery-item" data-label="{{ item.label }}"><i class="fas fa-image"></i></div>
+      <div class="gallery-item" data-label="{{ item.label }}" data-type="{{ item.media_type }}"
+           {% if item.media_type == 'video' %}data-direct-src="{{ item.direct_src or '' }}" data-embed-src="{{ item.embed_url or '' }}"{% else %}data-image-src="{{ item.image or '' }}"{% endif %}>
+        {% if item.media_type == 'video' %}
+          {% if item.image %}
+          <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+          <span class="play-badge"><i class="fas fa-play"></i></span>
+          {% elif item.thumb_url %}
+          <img src="{{ item.thumb_url }}" alt="{{ item.label }}" loading="lazy">
+          <span class="play-badge"><i class="fas fa-play"></i></span>
+          {% else %}
+          <i class="fas fa-video"></i>
+          {% endif %}
+        {% else %}
+          {% if item.image %}
+          <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+          {% else %}
+          <i class="fas fa-image"></i>
+          {% endif %}
+        {% endif %}
+      </div>
       {% endfor %}
     </div>
     <div class="text-center mt-40">

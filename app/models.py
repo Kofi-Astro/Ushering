@@ -18,7 +18,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -124,8 +124,25 @@ class Testimonial(Base):
 
 
 class GalleryItem(Base):
-    """One tile in the Gallery page's photo grid, filterable by
-    `category` (weddings/corporate/funerals/conferences/parties)."""
+    """One tile in the Gallery page's grid, filterable by `category`
+    (weddings/corporate/funerals/conferences/parties). Originally photos
+    only; `media_type` now also allows "video".
+
+    Videos are handled by URL only (YouTube, Vimeo, or a direct .mp4/.webm
+    link hosted elsewhere) rather than file upload — see
+    app/admin/routers/gallery.py's docstring for why: Railway's disk is
+    ephemeral and not sized for video, so self-hosting raw video files the
+    same way photos are hosted would silently break on the next redeploy.
+    `image`, for a video row, is repurposed as an optional poster/thumbnail
+    (uploaded the same way a photo would be) — only needed when the URL
+    isn't a YouTube link, since app/content.py can derive a real thumbnail
+    for those automatically.
+
+    `is_hero` marks a video as eligible to play as the homepage hero's
+    background/CTA media (see app/content.py:get_hero_video) — irrelevant
+    for photos, and irrelevant for a video that isn't marked, which just
+    displays in the regular grid like a photo does.
+    """
 
     __tablename__ = "gallery_items"
 
@@ -136,7 +153,20 @@ class GalleryItem(Base):
     # Path under /images/uploads/ once a photo's been uploaded through the
     # admin panel (app/admin/routers/gallery.py); empty string shows a
     # placeholder icon tile instead (see templates/pages/gallery.html).
+    # For a video row, doubles as an optional poster image (see class
+    # docstring above).
     image: Mapped[str] = mapped_column(String(300), default="")
+    # "image" or "video" — controls how app/content.py and the public
+    # templates render this row. Kept as a plain string rather than an
+    # Enum (contrast BookingStatus) since it's just a display switch, not
+    # a business-process state machine.
+    media_type: Mapped[str] = mapped_column(String(10), default="image")
+    # A YouTube/Vimeo watch link or a direct video file URL, set only when
+    # media_type == "video". app/content.py classifies which of those it
+    # is and builds the right playback markup — never used directly by
+    # templates.
+    video_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    is_hero: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class FAQItem(Base):

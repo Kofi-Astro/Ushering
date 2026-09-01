@@ -1,12 +1,12 @@
 {% extends "admin/base.html" %}
 {% block content %}
 <div class="section-toolbar">
-  <h2>{{ 'Edit Photo' if item else 'Add Photo' }}</h2>
+  <h2>{{ 'Edit Photo or Video' if item else 'Add Photo or Video' }}</h2>
   <a href="/gallery" class="btn-secondary">Back to Gallery</a>
 </div>
 
 <div class="form-card">
-  <form method="post" action="{{ ('/gallery/' ~ item.id ~ '/edit') if item else '/gallery/new' }}" enctype="multipart/form-data">
+  <form method="post" action="{{ ('/gallery/' ~ item.id ~ '/edit') if item else '/gallery/new' }}" enctype="multipart/form-data" id="gallery-form">
     <div class="field">
       <label for="label">Caption / Label</label>
       <input type="text" id="label" name="label" value="{{ item.label if item else '' }}" required>
@@ -24,16 +24,54 @@
       <input type="number" id="order" name="order" value="{{ item.order if item else 1 }}" min="1" required>
     </div>
     <div class="field">
+      <label for="media_type">Media Type</label>
+      <select id="media_type" name="media_type">
+        {% for mt in media_types %}
+        <option value="{{ mt }}" {{ 'selected' if item and item.media_type == mt }}>{{ mt|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" id="video-url-field">
+      <label for="video_url">Video URL</label>
+      <input type="url" id="video_url" name="video_url" value="{{ item.video_url if item and item.video_url else '' }}" placeholder="https://www.youtube.com/watch?v=... or a direct .mp4 link">
+      <p class="hint">A YouTube or Vimeo link, or a direct link to an .mp4/.webm file hosted elsewhere. Videos aren't uploaded through this form — see the note in app/admin/routers/gallery.py if you're wondering why.</p>
+    </div>
+    <div class="field" id="hero-field">
+      <label class="checkbox-label"><input type="checkbox" id="is_hero" name="is_hero" value="1" {{ 'checked' if item and item.is_hero }}> Feature as hero video on the homepage</label>
+      <p class="hint">Only one video is shown there — if more than one is marked, the lowest Display Order wins.</p>
+    </div>
+    <div class="field" id="photo-field">
       {% if item and item.image %}
       <div class="current-image"><img src="{{ item.image }}" alt="{{ item.label }}"></div>
       {% endif %}
-      <label for="photo">{{ 'Replace Photo' if item and item.image else 'Photo' }}</label>
+      <label for="photo" id="photo-label">{{ 'Replace Photo' if item and item.image else 'Photo' }}</label>
       <input type="file" id="photo" name="photo" accept="image/*">
-      <p class="hint">JPG, PNG, WebP or GIF. Leave empty to keep the current photo.</p>
+      <p class="hint" id="photo-hint">JPG, PNG, WebP or GIF. Leave empty to keep the current photo.</p>
     </div>
     <div class="form-actions">
-      <button type="submit" class="btn-primary">Save Photo</button>
+      <button type="submit" class="btn-primary">Save</button>
     </div>
   </form>
 </div>
+
+<script>
+  (function () {
+    var mediaType = document.getElementById('media_type');
+    var videoUrlField = document.getElementById('video-url-field');
+    var heroField = document.getElementById('hero-field');
+    var photoLabel = document.getElementById('photo-label');
+    var photoHint = document.getElementById('photo-hint');
+    function sync() {
+      var isVideo = mediaType.value === 'video';
+      videoUrlField.hidden = !isVideo;
+      heroField.hidden = !isVideo;
+      photoLabel.textContent = isVideo ? 'Poster Image (optional)' : ('{{ "Replace Photo" if item and item.image else "Photo" }}');
+      photoHint.textContent = isVideo
+        ? 'Only needed for non-YouTube links — YouTube videos get a thumbnail automatically.'
+        : 'JPG, PNG, WebP or GIF. Leave empty to keep the current photo.';
+    }
+    mediaType.addEventListener('change', sync);
+    sync();
+  })();
+</script>
 {% endblock %}
