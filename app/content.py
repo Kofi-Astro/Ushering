@@ -137,21 +137,24 @@ def get_gallery_items() -> list[dict]:
         return [_gallery_item_dict(g) for g in rows]
 
 
-def get_hero_video() -> dict | None:
-    """The video (if any) marked "Feature as hero video" in the admin
-    Gallery section, used as the homepage hero's background/CTA media
-    (see app/routers/pages.py:home and templates/pages/index.html). If
-    more than one is marked, the lowest `order` wins, so which one shows
-    is a deliberate admin choice rather than something that flips between
-    page loads."""
+def get_hero_videos() -> list[dict]:
+    """Every video marked "Feature as hero video" in the admin Gallery
+    section, ordered for display (see app/routers/pages.py:home and
+    templates/pages/index.html). Split into two different treatments
+    there, by which of `direct_src`/`embed_url` each ends up with: direct
+    file videos cycle silently through the homepage hero's background,
+    advancing to the next one as each finishes (see the hero-playlist
+    block in static/js/main.js); YouTube/Vimeo videos can't autoplay
+    silently in the background the same way, so each instead gets its own
+    "Watch" button that opens it in the lightbox on click."""
     with SessionLocal() as db:
-        row = (
+        rows = (
             db.query(GalleryItem)
             .filter(GalleryItem.media_type == "video", GalleryItem.is_hero.is_(True))
             .order_by(GalleryItem.order)
-            .first()
+            .all()
         )
-        return _gallery_item_dict(row) if row else None
+        return [_gallery_item_dict(g) for g in rows]
 
 
 def get_faqs() -> list[dict]:

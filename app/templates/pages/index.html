@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 <!--
-  hero_video (see app/content.py:get_hero_video) is the one GalleryItem,
-  if any, an admin marked "Feature as hero video". A direct video file
-  plays full-bleed behind this section (hero-bg-video below); a
-  YouTube/Vimeo link instead shows a "Watch" button that opens it in the
-  same lightbox the Gallery page uses — a true autoplaying background
-  loop isn't reliable for an embedded iframe, so this doesn't try to fake it.
+  hero_direct_videos / hero_embed_videos / hero_playlist_json (built by
+  app/routers/pages.py:_hero_video_context from every GalleryItem an
+  admin marked "Feature as hero video", see app/content.py:get_hero_videos)
+  split by playback strategy: direct video files cycle silently through
+  the full-bleed background below, one after another, via
+  data-hero-playlist and static/js/main.js — a true autoplaying background
+  loop isn't reliable for an embedded YouTube/Vimeo iframe, so those
+  instead each get their own "Watch" button that opens in the same
+  lightbox the Gallery page uses.
 -->
-<section class="hero{% if hero_video and hero_video.direct_src %} hero-has-video{% endif %}">
-  {% if hero_video and hero_video.direct_src %}
-  <video class="hero-bg-video" autoplay muted loop playsinline {% if hero_video.image %}poster="{{ hero_video.image }}"{% endif %}>
-    <source src="{{ hero_video.direct_src }}" type="video/mp4">
+<section class="hero{% if hero_direct_videos %} hero-has-video{% endif %}">
+  {% if hero_direct_videos %}
+  <video class="hero-bg-video" autoplay muted playsinline {% if hero_direct_videos|length == 1 %}loop{% endif %} {% if hero_direct_videos[0].image %}poster="{{ hero_direct_videos[0].image }}"{% endif %} data-hero-playlist='{{ hero_playlist_json }}'>
+    <source src="{{ hero_direct_videos[0].direct_src }}" type="video/mp4">
   </video>
   {% endif %}
   <div class="container">
@@ -21,11 +24,11 @@
     <div class="hero-buttons">
       <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
       <a href="/services.html" class="btn btn-outline">View Our Services</a>
-      {% if hero_video and hero_video.embed_url %}
-      <button type="button" class="btn btn-outline lightbox-trigger" data-label="{{ hero_video.label }}" data-type="video" data-embed-src="{{ hero_video.embed_url }}">
-        <i class="fas fa-circle-play"></i> Watch Highlights
+      {% for v in hero_embed_videos %}
+      <button type="button" class="btn btn-outline lightbox-trigger" data-label="{{ v.label }}" data-type="video" data-embed-src="{{ v.embed_url }}">
+        <i class="fas fa-circle-play"></i> {{ v.label }}
       </button>
-      {% endif %}
+      {% endfor %}
     </div>
     <div class="hero-stats">
       <div>

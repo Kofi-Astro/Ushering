@@ -139,9 +139,11 @@ class GalleryItem(Base):
     for those automatically.
 
     `is_hero` marks a video as eligible to play as the homepage hero's
-    background/CTA media (see app/content.py:get_hero_video) — irrelevant
-    for photos, and irrelevant for a video that isn't marked, which just
-    displays in the regular grid like a photo does.
+    background/CTA media (see app/content.py:get_hero_videos) — more than
+    one can be marked at once (they cycle/get their own "Watch" button,
+    see templates/pages/index.html) — and is irrelevant for photos and
+    for a video that isn't marked, which just displays in the regular
+    grid like a photo does.
     """
 
     __tablename__ = "gallery_items"

@@ -38,7 +38,7 @@
     </div>
     <div class="field" id="hero-field">
       <label class="checkbox-label"><input type="checkbox" id="is_hero" name="is_hero" value="1" {{ 'checked' if item and item.is_hero }}> Feature as hero video on the homepage</label>
-      <p class="hint">Only one video is shown there — if more than one is marked, the lowest Display Order wins.</p>
+      <p class="hint">You can mark more than one. Direct video file links cycle through the background one after another (in Display Order); YouTube/Vimeo links each get their own "Watch" button instead.</p>
     </div>
     <div class="field" id="photo-field">
       {% if item and item.image %}

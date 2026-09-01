@@ -38,6 +38,25 @@ def base_context(request: Request, **extra) -> dict:
     }
 
 
+def _hero_video_context() -> dict:
+    """Splits content.get_hero_videos() into the two ways
+    templates/pages/index.html's hero section uses them (see that
+    template's comment for why) and pre-serializes the direct-file ones
+    into JSON for static/js/main.js's cycling logic — building that here
+    rather than in the template keeps the "what does each video need for
+    playback" logic in one place instead of duplicated in Jinja."""
+    hero_videos = content.get_hero_videos()
+    direct_videos = [v for v in hero_videos if v["direct_src"]]
+    embed_videos = [v for v in hero_videos if v["embed_url"]]
+    return {
+        "hero_direct_videos": direct_videos,
+        "hero_embed_videos": embed_videos,
+        "hero_playlist_json": json.dumps(
+            [{"src": v["direct_src"], "poster": v["image"] or None} for v in direct_videos]
+        ),
+    }
+
+
 @router.get("/")
 def home(request: Request):
     # Structured data (JSON-LD) describing the business for search engines
@@ -89,7 +108,7 @@ def home(request: Request):
             services=content.get_services()[:6],
             gallery_items=content.get_gallery_items()[:3],
             testimonials=content.get_testimonials()[:3],
-            hero_video=content.get_hero_video(),
+            **_hero_video_context(),
         ),
     )
 

@@ -6,6 +6,36 @@
 // booking form.
 
 document.addEventListener('DOMContentLoaded', () => {
+  /* Hero background video cycling: when more than one direct video file
+     is marked "Feature as hero video" in the admin Gallery section (see
+     app/content.py:get_hero_videos), this advances the background
+     <video> to the next one each time the current clip ends, looping
+     back to the first after the last — silent and automatic, same as a
+     single hero video, just rotating through several. A single hero
+     video instead just uses the plain HTML `loop` attribute (see
+     templates/pages/index.html) and never reaches the `length > 1`
+     branch below. */
+  const heroVideo = document.querySelector('.hero-bg-video');
+  if (heroVideo && heroVideo.dataset.heroPlaylist) {
+    let heroPlaylist = [];
+    try {
+      heroPlaylist = JSON.parse(heroVideo.dataset.heroPlaylist);
+    } catch (e) {
+      heroPlaylist = [];
+    }
+    if (heroPlaylist.length > 1) {
+      let heroIndex = 0;
+      heroVideo.addEventListener('ended', () => {
+        heroIndex = (heroIndex + 1) % heroPlaylist.length;
+        const next = heroPlaylist[heroIndex];
+        heroVideo.src = next.src;
+        if (next.poster) heroVideo.poster = next.poster;
+        heroVideo.load();
+        heroVideo.play();
+      });
+    }
+  }
+
   /* Light / dark theme toggle. The INITIAL theme is set synchronously by
      an inline <script> at the very top of <head> (see app/templates/
      base.html) — before this file even loads — specifically to avoid a
