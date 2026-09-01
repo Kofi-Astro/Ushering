@@ -2,9 +2,9 @@
 {% block content %}
 <section class="hero page-hero">
   <div class="container">
-    <span class="hero-eyebrow">Our Services</span>
-    <h1>Ushering &amp; Event Support for Every Occasion</h1>
-    <p class="breadcrumb"><a href="/">Home</a> / Services</p>
+    <span class="hero-eyebrow">{{ site_text['services.hero.eyebrow'] }}</span>
+    <h1>{{ site_text['services.hero.title'] }}</h1>
+    <p class="breadcrumb"><a href="/">{{ site_text['nav.home_label'] }}</a> / {{ site_text['nav.services_label'] }}</p>
   </div>
 </section>
 
@@ -32,29 +32,29 @@
 <section class="section-alt">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">How It Works</span>
-      <h2>Booking Us Is Simple</h2>
+      <span class="eyebrow">{{ site_text['services.how.eyebrow'] }}</span>
+      <h2>{{ site_text['services.how.title'] }}</h2>
     </div>
     <div class="process-grid">
       <div class="process-step">
         <div class="step-num">1</div>
-        <h3>Inquire</h3>
-        <p>Reach out via our booking form, call or WhatsApp with your event details.</p>
+        <h3>{{ site_text['services.how.step1_title'] }}</h3>
+        <p>{{ site_text['services.how.step1_body'] }}</p>
       </div>
       <div class="process-step">
         <div class="step-num">2</div>
-        <h3>Consult</h3>
-        <p>We discuss your event, guest count and specific needs to plan the right team.</p>
+        <h3>{{ site_text['services.how.step2_title'] }}</h3>
+        <p>{{ site_text['services.how.step2_body'] }}</p>
       </div>
       <div class="process-step">
         <div class="step-num">3</div>
-        <h3>Confirm</h3>
-        <p>We agree on scope, staffing and schedule, then confirm your booking.</p>
+        <h3>{{ site_text['services.how.step3_title'] }}</h3>
+        <p>{{ site_text['services.how.step3_body'] }}</p>
       </div>
       <div class="process-step">
         <div class="step-num">4</div>
-        <h3>Deliver</h3>
-        <p>Our trained ushers arrive early and deliver a smooth, professional event.</p>
+        <h3>{{ site_text['services.how.step4_title'] }}</h3>
+        <p>{{ site_text['services.how.step4_body'] }}</p>
       </div>
     </div>
   </div>
@@ -64,11 +64,11 @@
   <div class="container">
     <div class="cta-banner">
       <div>
-        <h2>Not Sure Which Service You Need?</h2>
-        <p>Tell us about your event and we'll recommend the right package for you.</p>
+        <h2>{{ site_text['services.cta.title'] }}</h2>
+        <p>{{ site_text['services.cta.paragraph'] }}</p>
       </div>
       <div class="hero-buttons" style="margin-top:0;">
-        <a href="/book-us.html" class="btn btn-gold">Get In Touch</a>
+        <a href="/book-us.html" class="btn btn-gold">{{ site_text['services.cta.button'] }}</a>
       </div>
     </div>
   </div>

@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Page Text — {{ group.title }}</h2>
+  <a href="/page-text" class="btn-secondary">All Page Text</a>
+</div>
+
+<div class="filter-row">
+  {% for key, g in groups.items() %}
+  <a href="/page-text/{{ key }}" class="{{ 'active' if key == group_key }}">{{ g.title }}</a>
+  {% endfor %}
+</div>
+
+<div class="form-card" style="max-width: 820px;">
+  <form method="post" action="/page-text/{{ group_key }}">
+    {% for f, value in fields %}
+    <div class="field">
+      <label for="{{ f.key }}">{{ f.label }}</label>
+      {% if f.long %}
+      <textarea id="{{ f.key }}" name="{{ f.key }}" rows="3">{{ value }}</textarea>
+      {% else %}
+      <input type="text" id="{{ f.key }}" name="{{ f.key }}" value="{{ value }}">
+      {% endif %}
+    </div>
+    {% endfor %}
+    <div class="form-actions">
+      <button type="submit" class="btn-primary">Save {{ group.title }} Text</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

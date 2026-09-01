@@ -220,13 +220,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       const successBox = document.querySelector('.form-success');
       if (successBox) {
-        /* The manage link is also emailed to the customer (see
-           app/email_notify.py:send_customer_confirmation), but shown here
-           too so getting it never depends on that email actually arriving. */
-        const linkHtml = manageUrl
-          ? ` <a href="${manageUrl}">Save this link</a> to view or change your booking later.`
-          : '';
-        successBox.innerHTML = `Thank you! Your booking request has been received. We'll be in touch shortly.${linkHtml}`;
+        /* The message text itself is server-rendered from
+           site_text['book_us.success_message'] (see
+           templates/pages/book-us.html) and left alone here — only the
+           manage-link part (built fresh per submission) is filled in,
+           via safe DOM methods rather than innerHTML since manageUrl
+           reaches this from the server response. The manage link is
+           also emailed to the customer (see
+           app/email_notify.py:send_customer_confirmation), but shown
+           here too so getting it never depends on that email arriving. */
+        const linkSpan = successBox.querySelector('.form-success-link');
+        if (linkSpan) {
+          linkSpan.textContent = '';
+          if (manageUrl) {
+            linkSpan.append(' ');
+            const link = document.createElement('a');
+            link.href = manageUrl;
+            link.textContent = 'Save this link';
+            linkSpan.appendChild(link);
+            linkSpan.append(' to view or change your booking later.');
+          }
+        }
         successBox.classList.add('show');
         successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }

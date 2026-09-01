@@ -2,9 +2,9 @@
 {% block content %}
 <section class="hero page-hero">
   <div class="container">
-    <span class="hero-eyebrow">FAQ</span>
-    <h1>Frequently Asked Questions</h1>
-    <p class="breadcrumb"><a href="/">Home</a> / FAQ</p>
+    <span class="hero-eyebrow">{{ site_text['faq.hero.eyebrow'] }}</span>
+    <h1>{{ site_text['faq.hero.title'] }}</h1>
+    <p class="breadcrumb"><a href="/">{{ site_text['nav.home_label'] }}</a> / {{ site_text['nav.faq_label'] }}</p>
   </div>
 </section>
 
@@ -27,15 +27,15 @@
   <div class="container">
     <div class="cta-banner">
       <div>
-        <h2>Still Have Questions?</h2>
-        <p>Reach out and we'll be happy to help you plan your event.</p>
+        <h2>{{ site_text['faq.cta.title'] }}</h2>
+        <p>{{ site_text['faq.cta.paragraph'] }}</p>
       </div>
       <div class="hero-buttons" style="margin-top:0;">
-        <a href="/book-us.html" class="btn btn-gold">Contact Us</a>
-        <a href="https://wa.me/{{ settings.whatsapp_number }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-        <a href="{{ settings.facebook_url }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i> Facebook</a>
-        <a href="{{ settings.instagram_url }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>
-        <a href="{{ settings.tiktok_url }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-tiktok"></i> TikTok</a>
+        <a href="/book-us.html" class="btn btn-gold">{{ site_text['faq.cta.contact_button'] }}</a>
+        <a href="https://wa.me/{{ settings.whatsapp_number }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> {{ site_text['faq.cta.whatsapp_button'] }}</a>
+        <a href="{{ settings.facebook_url }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i> {{ site_text['faq.cta.facebook_button'] }}</a>
+        <a href="{{ settings.instagram_url }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> {{ site_text['faq.cta.instagram_button'] }}</a>
+        <a href="{{ settings.tiktok_url }}" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-tiktok"></i> {{ site_text['faq.cta.tiktok_button'] }}</a>
       </div>
     </div>
   </div>

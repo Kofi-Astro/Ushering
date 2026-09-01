@@ -2,7 +2,7 @@
   <div class="container footer-grid">
     <div>
       <a href="/" class="logo"><img class="logo-mark" src="/images/logo-mark.png" alt="GPS Ushering and Events">GPS <span>Ushering</span> &amp; Events</a>
-      <p class="about-text">Professional ushering and event support services for weddings, corporate events, funerals, conferences and special occasions across Ghana.</p>
+      <p class="about-text">{{ site_text['footer.blurb'] }}</p>
       <div class="footer-social">
         <a href="{{ settings.facebook_url }}" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
         <a href="{{ settings.instagram_url }}" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -13,23 +13,23 @@
          separate admin-editable fields — a platform's line only renders
          once its URL is a real link, not the unset "#" placeholder. #}
       <ul class="footer-handles">
-        {% if settings.facebook_handle %}<li><a href="{{ settings.facebook_url }}"><span class="handle-label">Facebook</span><span class="dot">&middot;</span>{{ settings.facebook_handle }}</a></li>{% endif %}
-        {% if settings.instagram_handle %}<li><a href="{{ settings.instagram_url }}"><span class="handle-label">Instagram</span><span class="dot">&middot;</span>{{ settings.instagram_handle }}</a></li>{% endif %}
-        {% if settings.tiktok_handle %}<li><a href="{{ settings.tiktok_url }}"><span class="handle-label">TikTok</span><span class="dot">&middot;</span>{{ settings.tiktok_handle }}</a></li>{% endif %}
+        {% if settings.facebook_handle %}<li><a href="{{ settings.facebook_url }}"><span class="handle-label">{{ site_text['footer.facebook_handle_label'] }}</span><span class="dot">&middot;</span>{{ settings.facebook_handle }}</a></li>{% endif %}
+        {% if settings.instagram_handle %}<li><a href="{{ settings.instagram_url }}"><span class="handle-label">{{ site_text['footer.instagram_handle_label'] }}</span><span class="dot">&middot;</span>{{ settings.instagram_handle }}</a></li>{% endif %}
+        {% if settings.tiktok_handle %}<li><a href="{{ settings.tiktok_url }}"><span class="handle-label">{{ site_text['footer.tiktok_handle_label'] }}</span><span class="dot">&middot;</span>{{ settings.tiktok_handle }}</a></li>{% endif %}
       </ul>
     </div>
     <div>
-      <h4>Quick Links</h4>
+      <h4>{{ site_text['footer.quick_links_heading'] }}</h4>
       <ul>
-        <li><a href="/about.html">About Us</a></li>
-        <li><a href="/services.html">Services</a></li>
-        <li><a href="/gallery.html">Gallery</a></li>
-        <li><a href="/testimonials.html">Testimonials</a></li>
-        <li><a href="/faq.html">FAQ</a></li>
+        <li><a href="/about.html">{{ site_text['nav.about_label'] }}</a></li>
+        <li><a href="/services.html">{{ site_text['nav.services_label'] }}</a></li>
+        <li><a href="/gallery.html">{{ site_text['nav.gallery_label'] }}</a></li>
+        <li><a href="/testimonials.html">{{ site_text['nav.testimonials_label'] }}</a></li>
+        <li><a href="/faq.html">{{ site_text['nav.faq_label'] }}</a></li>
       </ul>
     </div>
     <div>
-      <h4>Services</h4>
+      <h4>{{ site_text['footer.services_heading'] }}</h4>
       <ul>
         {% for service in footer_services %}
         <li><a href="/services.html">{{ service.title }}</a></li>
@@ -37,14 +37,14 @@
       </ul>
     </div>
     <div>
-      <h4>Contact</h4>
+      <h4>{{ site_text['footer.contact_heading'] }}</h4>
       <div class="contact-row"><i class="fas fa-phone"></i><a href="tel:{{ settings.phone_display | replace(' ', '') }}">{{ settings.phone_display }}</a></div>
       <div class="contact-row"><i class="fas fa-envelope"></i><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></div>
       <div class="contact-row"><i class="fas fa-location-dot"></i><a href="https://www.google.com/maps/search/?api=1&query={{ settings.address | urlencode }}" target="_blank" rel="noopener">{{ settings.address }}</a></div>
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>&copy; <span class="current-year"></span> {{ settings.site_name }}. All rights reserved.</span>
-    <span><a href="/book-us.html">Book Us</a></span>
+    <span>&copy; <span class="current-year"></span> {{ settings.site_name }}. {{ site_text['footer.copyright_suffix'] }}</span>
+    <span><a href="/book-us.html">{{ site_text['nav.book_us_label'] }}</a></span>
   </div>
 </footer>

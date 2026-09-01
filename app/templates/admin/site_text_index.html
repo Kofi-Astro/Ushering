@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Page Text</h2>
+</div>
+<p class="empty" style="margin-bottom: 20px;">Every heading, paragraph and button label on the public site that isn't already covered by Services, Testimonials, Gallery, FAQ or Settings — grouped by which page it's on.</p>
+
+<div class="item-list">
+  {% for key, group in groups.items() %}
+  <div class="item-row">
+    <div class="item-thumb"><i class="fas fa-file-lines"></i></div>
+    <div class="item-body">
+      <div class="item-title">{{ group.title }}</div>
+      <div class="item-meta">{{ group.fields|length }} editable field{{ 's' if group.fields|length != 1 }}</div>
+    </div>
+    <div class="item-actions">
+      <a href="/page-text/{{ key }}" class="btn-secondary">Edit</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

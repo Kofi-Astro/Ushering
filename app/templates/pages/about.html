@@ -2,24 +2,24 @@
 {% block content %}
 <section class="hero page-hero">
   <div class="container">
-    <span class="hero-eyebrow">About Us</span>
-    <h1>The Team Behind Your Seamless Event</h1>
-    <p class="breadcrumb"><a href="/">Home</a> / About Us</p>
+    <span class="hero-eyebrow">{{ site_text['about.hero.eyebrow'] }}</span>
+    <h1>{{ site_text['about.hero.title'] }}</h1>
+    <p class="breadcrumb"><a href="/">{{ site_text['nav.home_label'] }}</a> / {{ site_text['nav.about_label'] }}</p>
   </div>
 </section>
 
 <section>
   <div class="container split">
     <div class="split-media">
-      <div class="media-frame"><i class="fas fa-images"></i><span class="frame-note">Team / event photo — to be added</span></div>
+      <div class="media-frame"><i class="fas fa-images"></i><span class="frame-note">{{ site_text['about.media_note'] }}</span></div>
       <div class="media-accent"></div>
     </div>
     <div class="split-body">
-      <span class="eyebrow">Our Story</span>
-      <h2>Built on Professionalism &amp; Genuine Hospitality</h2>
-      <p>GPS Ushering and Events was founded to bring order, elegance and warmth to events across Ghana. What began as a small team of dedicated ushers has grown into a trusted service for event planners, corporate organizations, couples, funeral organizers, schools, churches and brands.</p>
-      <p>We believe that the first face a guest sees sets the tone for the entire event — so we train every usher to combine sharp presentation with genuine hospitality, ensuring each guest feels welcomed, guided and valued from arrival to departure.</p>
-      <a href="/book-us.html" class="btn btn-wine mt-40">Work With Us</a>
+      <span class="eyebrow">{{ site_text['about.story.eyebrow'] }}</span>
+      <h2>{{ site_text['about.story.title'] }}</h2>
+      <p>{{ site_text['about.story.paragraph1'] }}</p>
+      <p>{{ site_text['about.story.paragraph2'] }}</p>
+      <a href="/book-us.html" class="btn btn-wine mt-40">{{ site_text['about.story.cta'] }}</a>
     </div>
   </div>
 </section>
@@ -27,29 +27,29 @@
 <section class="section-alt">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Mission &amp; Vision</span>
-      <h2>What Drives Us</h2>
+      <span class="eyebrow">{{ site_text['about.values.eyebrow'] }}</span>
+      <h2>{{ site_text['about.values.title'] }}</h2>
     </div>
     <div class="values-grid">
       <div class="value-card">
         <div class="value-icon"><i class="fas fa-bullseye"></i></div>
-        <h3>Our Mission</h3>
-        <p>To deliver smooth guest coordination and outstanding hospitality that elevates every event we support.</p>
+        <h3>{{ site_text['about.values.mission_title'] }}</h3>
+        <p>{{ site_text['about.values.mission_body'] }}</p>
       </div>
       <div class="value-card">
         <div class="value-icon"><i class="fas fa-eye"></i></div>
-        <h3>Our Vision</h3>
-        <p>To be Ghana's most trusted name in professional ushering and event support services.</p>
+        <h3>{{ site_text['about.values.vision_title'] }}</h3>
+        <p>{{ site_text['about.values.vision_body'] }}</p>
       </div>
       <div class="value-card">
         <div class="value-icon"><i class="fas fa-handshake"></i></div>
-        <h3>Our Promise</h3>
-        <p>Punctual, well-presented and courteous staff at every event, every time.</p>
+        <h3>{{ site_text['about.values.promise_title'] }}</h3>
+        <p>{{ site_text['about.values.promise_body'] }}</p>
       </div>
       <div class="value-card">
         <div class="value-icon"><i class="fas fa-heart"></i></div>
-        <h3>Our Values</h3>
-        <p>Professionalism, elegance, reliability and heartfelt customer service guide everything we do.</p>
+        <h3>{{ site_text['about.values.values_title'] }}</h3>
+        <p>{{ site_text['about.values.values_body'] }}</p>
       </div>
     </div>
   </div>
@@ -58,39 +58,39 @@
 <section>
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Why Choose Us</span>
-      <h2>What Sets GPS Ushering Apart</h2>
+      <span class="eyebrow">{{ site_text['about.why.eyebrow'] }}</span>
+      <h2>{{ site_text['about.why.title'] }}</h2>
     </div>
     <div class="cards-grid">
       <div class="service-card">
         <div class="service-icon"><i class="fas fa-user-tie"></i></div>
-        <h3>Trained &amp; Presentable Staff</h3>
-        <p>Every usher is trained in etiquette, guest handling and event protocol, and presented in smart, coordinated attire.</p>
+        <h3>{{ site_text['about.why.card1_title'] }}</h3>
+        <p>{{ site_text['about.why.card1_body'] }}</p>
       </div>
       <div class="service-card">
         <div class="service-icon"><i class="fas fa-clock"></i></div>
-        <h3>Punctual &amp; Reliable</h3>
-        <p>We arrive early, brief thoroughly and stay composed under pressure so your event runs on time.</p>
+        <h3>{{ site_text['about.why.card2_title'] }}</h3>
+        <p>{{ site_text['about.why.card2_body'] }}</p>
       </div>
       <div class="service-card">
         <div class="service-icon"><i class="fas fa-sliders"></i></div>
-        <h3>Tailored to Your Event</h3>
-        <p>From intimate gatherings to large conferences, we scale our team and approach to fit your specific needs.</p>
+        <h3>{{ site_text['about.why.card3_title'] }}</h3>
+        <p>{{ site_text['about.why.card3_body'] }}</p>
       </div>
       <div class="service-card">
         <div class="service-icon"><i class="fas fa-comments"></i></div>
-        <h3>Clear Communication</h3>
-        <p>From your first inquiry to the final guest departure, we keep you informed every step of the way.</p>
+        <h3>{{ site_text['about.why.card4_title'] }}</h3>
+        <p>{{ site_text['about.why.card4_body'] }}</p>
       </div>
       <div class="service-card">
         <div class="service-icon"><i class="fas fa-shield-halved"></i></div>
-        <h3>Discreet &amp; Respectful</h3>
-        <p>We handle sensitive occasions, including funerals, with the utmost dignity and discretion.</p>
+        <h3>{{ site_text['about.why.card5_title'] }}</h3>
+        <p>{{ site_text['about.why.card5_body'] }}</p>
       </div>
       <div class="service-card">
         <div class="service-icon"><i class="fas fa-map-location-dot"></i></div>
-        <h3>Nationwide Coverage</h3>
-        <p>Based in Accra and available to support events across Ghana.</p>
+        <h3>{{ site_text['about.why.card6_title'] }}</h3>
+        <p>{{ site_text['about.why.card6_body'] }}</p>
       </div>
     </div>
   </div>
@@ -100,11 +100,11 @@
   <div class="container">
     <div class="cta-banner">
       <div>
-        <h2>Let's Make Your Event Unforgettable</h2>
-        <p>Tell us about your event and we'll put together the right team for you.</p>
+        <h2>{{ site_text['about.cta.title'] }}</h2>
+        <p>{{ site_text['about.cta.paragraph'] }}</p>
       </div>
       <div class="hero-buttons" style="margin-top:0;">
-        <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+        <a href="/book-us.html" class="btn btn-gold">{{ site_text['about.cta.button'] }}</a>
       </div>
     </div>
   </div>

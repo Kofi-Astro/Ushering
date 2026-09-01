@@ -2,9 +2,9 @@
 {% block content %}
 <section class="hero page-hero">
   <div class="container">
-    <span class="hero-eyebrow">Gallery</span>
-    <h1>Moments From Events We've Proudly Supported</h1>
-    <p class="breadcrumb"><a href="/">Home</a> / Gallery</p>
+    <span class="hero-eyebrow">{{ site_text['gallery.hero.eyebrow'] }}</span>
+    <h1>{{ site_text['gallery.hero.title'] }}</h1>
+    <p class="breadcrumb"><a href="/">{{ site_text['nav.home_label'] }}</a> / {{ site_text['nav.gallery_label'] }}</p>
   </div>
 </section>
 
@@ -18,12 +18,12 @@
 <section>
   <div class="container">
     <div class="filter-bar">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="weddings">Weddings</button>
-      <button class="filter-btn" data-filter="corporate">Corporate</button>
-      <button class="filter-btn" data-filter="funerals">Funerals</button>
-      <button class="filter-btn" data-filter="conferences">Conferences</button>
-      <button class="filter-btn" data-filter="parties">Birthdays &amp; Parties</button>
+      <button class="filter-btn active" data-filter="all">{{ site_text['gallery.filter.all'] }}</button>
+      <button class="filter-btn" data-filter="weddings">{{ site_text['gallery.filter.weddings'] }}</button>
+      <button class="filter-btn" data-filter="corporate">{{ site_text['gallery.filter.corporate'] }}</button>
+      <button class="filter-btn" data-filter="funerals">{{ site_text['gallery.filter.funerals'] }}</button>
+      <button class="filter-btn" data-filter="conferences">{{ site_text['gallery.filter.conferences'] }}</button>
+      <button class="filter-btn" data-filter="parties">{{ site_text['gallery.filter.parties'] }}</button>
     </div>
 
     <div class="gallery-grid">
@@ -57,11 +57,11 @@
   <div class="container">
     <div class="cta-banner">
       <div>
-        <h2>Want Photos Like These From Your Event?</h2>
-        <p>Book our team and let us help create a memorable, well-run experience for your guests.</p>
+        <h2>{{ site_text['gallery.cta.title'] }}</h2>
+        <p>{{ site_text['gallery.cta.paragraph'] }}</p>
       </div>
       <div class="hero-buttons" style="margin-top:0;">
-        <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+        <a href="/book-us.html" class="btn btn-gold">{{ site_text['gallery.cta.button'] }}</a>
       </div>
     </div>
   </div>

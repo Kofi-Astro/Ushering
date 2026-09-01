@@ -5,9 +5,9 @@
 {% block content %}
 <section class="hero page-hero">
   <div class="container">
-    <span class="hero-eyebrow">Book Us</span>
-    <h1>Let's Plan Your Event Together</h1>
-    <p class="breadcrumb"><a href="/">Home</a> / Book Us</p>
+    <span class="hero-eyebrow">{{ site_text['book_us.hero.eyebrow'] }}</span>
+    <h1>{{ site_text['book_us.hero.title'] }}</h1>
+    <p class="breadcrumb"><a href="/">{{ site_text['nav.home_label'] }}</a> / {{ site_text['nav.book_us_label'] }}</p>
   </div>
 </section>
 
@@ -15,10 +15,10 @@
   <div class="container contact-grid">
 
     <div>
-      <div class="form-success">Thank you! Your booking request has been received. We'll be in touch shortly.</div>
+      <div class="form-success"><span class="form-success-text">{{ site_text['book_us.success_message'] }}</span><span class="form-success-link"></span></div>
       <div class="booking-form">
-        <h3>Request a Booking</h3>
-        <p style="margin-bottom:24px;">Fill in your event details below and our team will get back to you within 24 hours.</p>
+        <h3>{{ site_text['book_us.form.title'] }}</h3>
+        <p style="margin-bottom:24px;">{{ site_text['book_us.form.intro'] }}</p>
 
         <form id="booking-form" name="booking">
           <p style="display:none;" aria-hidden="true">
@@ -70,40 +70,40 @@
 
           <div class="field">
             <label for="location">Event Location</label>
-            <input type="text" id="location" name="location" placeholder="Venue and city/town">
-            <p class="hint">Click or drag the pin on the map to your venue and we'll fill this in for you — or just type it in directly.</p>
+            <input type="text" id="location" name="location" placeholder="{{ site_text['book_us.form.location_placeholder'] }}">
+            <p class="hint">{{ site_text['book_us.form.location_hint'] }}</p>
             <div id="location-picker" class="map-frame" aria-label="Click to set your event location"></div>
           </div>
 
           <div class="field">
             <label for="message">Tell Us More</label>
-            <textarea id="message" name="message" placeholder="Number of ushers needed, special requirements, etc."></textarea>
+            <textarea id="message" name="message" placeholder="{{ site_text['book_us.form.message_placeholder'] }}"></textarea>
           </div>
 
-          <button type="submit" class="btn btn-wine">Submit Booking Request</button>
-          <p class="form-note">By submitting this form, you agree to be contacted by GPS Ushering and Events regarding your inquiry.</p>
+          <button type="submit" class="btn btn-wine">{{ site_text['book_us.form.submit_button'] }}</button>
+          <p class="form-note">{{ site_text['book_us.form.disclaimer'] }}</p>
         </form>
       </div>
     </div>
 
     <div>
       <div class="contact-info-card">
-        <h3>Contact Details</h3>
+        <h3>{{ site_text['book_us.contact.title'] }}</h3>
         <div class="contact-row">
           <i class="fas fa-phone"></i>
-          <div><div class="label">Call Us</div><a href="tel:+{{ settings.whatsapp_number }}">{{ settings.phone_display }}</a></div>
+          <div><div class="label">{{ site_text['book_us.contact.call_label'] }}</div><a href="tel:+{{ settings.whatsapp_number }}">{{ settings.phone_display }}</a></div>
         </div>
         <div class="contact-row">
           <i class="fab fa-whatsapp"></i>
-          <div><div class="label">WhatsApp</div><a href="https://wa.me/{{ settings.whatsapp_number }}" target="_blank" rel="noopener">Chat With Us</a></div>
+          <div><div class="label">{{ site_text['book_us.contact.whatsapp_label'] }}</div><a href="https://wa.me/{{ settings.whatsapp_number }}" target="_blank" rel="noopener">{{ site_text['book_us.contact.whatsapp_cta'] }}</a></div>
         </div>
         <div class="contact-row">
           <i class="fas fa-envelope"></i>
-          <div><div class="label">Email</div><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></div>
+          <div><div class="label">{{ site_text['book_us.contact.email_label'] }}</div><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></div>
         </div>
         <div class="contact-row">
           <i class="fas fa-location-dot"></i>
-          <div><div class="label">Location</div><a href="https://www.google.com/maps/search/?api=1&query={{ settings.address | urlencode }}" target="_blank" rel="noopener">{{ settings.address }}</a></div>
+          <div><div class="label">{{ site_text['book_us.contact.location_label'] }}</div><a href="https://www.google.com/maps/search/?api=1&query={{ settings.address | urlencode }}" target="_blank" rel="noopener">{{ settings.address }}</a></div>
         </div>
         <div class="contact-social">
           <a href="{{ settings.facebook_url }}" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>

@@ -183,6 +183,28 @@ class FAQItem(Base):
     answer: Mapped[str] = mapped_column(Text)
 
 
+class SiteText(Base):
+    """One editable piece of free-form copy — a heading, paragraph, button
+    label or similar wording baked into the page templates rather than
+    already covered by Service/Testimonial/GalleryItem/FAQItem/
+    SiteSetting. A generic key/value table rather than one column per
+    string, since there are well over a hundred of these; the full
+    catalog of keys (grouped by which page/section each belongs to, with
+    its admin-facing label and starter value) lives in
+    app/site_text_catalog.py, not here — this table just stores whatever
+    the business owner has saved for each key. app/seed.py inserts every
+    catalog key's default value once, so app/content.py:get_site_text
+    never needs to handle a missing key, and the public templates never
+    need a fallback in the `{{ site_text['some.key'] }}` lookup itself.
+    """
+
+    __tablename__ = "site_text"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    key: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    value: Mapped[str] = mapped_column(Text)
+
+
 class AdminAuth(Base):
     """Single-row table (id is always 1) holding whatever's needed for the
     admin password-reset flow — see app/security.py and

@@ -6,7 +6,8 @@ database (each seed function checks the table is empty before inserting).
 
 from sqlalchemy.orm import Session
 
-from .models import FAQItem, GalleryItem, Service, SiteSetting, Testimonial
+from .models import FAQItem, GalleryItem, Service, SiteSetting, SiteText, Testimonial
+from .site_text_catalog import all_fields
 
 SERVICES = [
     dict(
@@ -203,4 +204,6 @@ def seed_if_empty(db: Session) -> None:
         db.add_all(FAQItem(**data) for data in FAQ_ITEMS)
     if db.query(SiteSetting).count() == 0:
         db.add(SiteSetting(id=1))
+    if db.query(SiteText).count() == 0:
+        db.add_all(SiteText(key=f.key, value=f.default) for f in all_fields())
     db.commit()

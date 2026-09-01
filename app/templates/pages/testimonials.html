@@ -2,9 +2,9 @@
 {% block content %}
 <section class="hero page-hero">
   <div class="container">
-    <span class="hero-eyebrow">Testimonials</span>
-    <h1>What Our Clients Say About Us</h1>
-    <p class="breadcrumb"><a href="/">Home</a> / Testimonials</p>
+    <span class="hero-eyebrow">{{ site_text['testimonials.hero.eyebrow'] }}</span>
+    <h1>{{ site_text['testimonials.hero.title'] }}</h1>
+    <p class="breadcrumb"><a href="/">{{ site_text['nav.home_label'] }}</a> / {{ site_text['nav.testimonials_label'] }}</p>
   </div>
 </section>
 
@@ -32,11 +32,11 @@
   <div class="container">
     <div class="cta-banner">
       <div>
-        <h2>Ready to Become Our Next Happy Client?</h2>
-        <p>Let's give your guests the same experience.</p>
+        <h2>{{ site_text['testimonials.cta.title'] }}</h2>
+        <p>{{ site_text['testimonials.cta.paragraph'] }}</p>
       </div>
       <div class="hero-buttons" style="margin-top:0;">
-        <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+        <a href="/book-us.html" class="btn btn-gold">{{ site_text['testimonials.cta.button'] }}</a>
       </div>
     </div>
   </div>

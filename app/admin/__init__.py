@@ -12,7 +12,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from .routers import auth, bookings, faq, gallery, home, services, settings, testimonials
+from .routers import auth, bookings, faq, gallery, home, services, settings, site_text, testimonials
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -36,3 +36,4 @@ admin_app.include_router(gallery.router)       # /gallery
 admin_app.include_router(testimonials.router)  # /testimonials
 admin_app.include_router(faq.router)           # /faq
 admin_app.include_router(settings.router)      # /settings
+admin_app.include_router(site_text.router)     # /page-text

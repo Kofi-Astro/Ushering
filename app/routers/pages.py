@@ -25,7 +25,10 @@ def base_context(request: Request, **extra) -> dict:
     """Template context every page needs regardless of what else it adds:
     the request itself (Jinja2Templates requires this), site-wide settings
     (contact info, social links — used by the shared topbar/navbar/footer
-    partials), and the first 4 services for the footer's link list. Each
+    partials), the first 4 services for the footer's link list, and every
+    editable copy block (see app/site_text_catalog.py) as `site_text` —
+    the navbar and footer partials read from it directly, and every page
+    template does too for its own headings/paragraphs/button labels. Each
     route below calls this and layers its own title/description/keywords
     and page-specific data (services, gallery_items, etc.) on top via
     **extra.
@@ -33,6 +36,7 @@ def base_context(request: Request, **extra) -> dict:
     return {
         "request": request,
         "settings": content.get_site_settings(),
+        "site_text": content.get_site_text(),
         "footer_services": content.get_services()[:4],
         **extra,
     }

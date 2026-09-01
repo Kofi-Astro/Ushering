@@ -24,7 +24,8 @@ from urllib.parse import parse_qs, quote, urlparse
 import markdown as md
 
 from .database import SessionLocal
-from .models import FAQItem, GalleryItem, Service, SiteSetting, Testimonial
+from .models import FAQItem, GalleryItem, Service, SiteSetting, SiteText, Testimonial
+from .site_text_catalog import all_fields
 
 
 def get_services() -> list[dict]:
@@ -283,3 +284,22 @@ def get_site_settings() -> dict:
             "instagram_handle": _handle_from_url(row.instagram_url),
             "tiktok_handle": _handle_from_url(row.tiktok_url),
         }
+
+
+def get_site_text() -> dict[str, str]:
+    """Every editable copy block (headings, paragraphs, button labels —
+    see app/site_text_catalog.py for the full catalog of keys and what
+    each one is), keyed by its dotted name. Injected into every page's
+    context (see app/routers/pages.py:base_context) as `site_text`, so
+    templates do `{{ site_text['home.hero.title'] }}` instead of hardcoding
+    the copy directly — one query loads every key at once rather than a
+    separate round trip per string.
+
+    Falls back to the catalog's own default for any key missing from the
+    database (there shouldn't be one — app/seed.py inserts every catalog
+    key's default the first time the app runs — but a key added to the
+    catalog after that first run, without a matching migration/backfill,
+    would otherwise render as blank instead of its intended starter text)."""
+    with SessionLocal() as db:
+        saved = {row.key: row.value for row in db.query(SiteText).all()}
+    return {f.key: saved.get(f.key, f.default) for f in all_fields()}

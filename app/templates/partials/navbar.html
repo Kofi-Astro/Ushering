@@ -2,16 +2,16 @@
   <div class="container nav-inner">
     <a href="/" class="logo"><img class="logo-mark" src="/images/logo-mark.png" alt="GPS Ushering and Events">GPS <span>Ushering</span> &amp; Events</a>
     <nav class="nav-links">
-      <a href="/" class="{{ 'active' if nav == 'home' }}">Home</a>
-      <a href="/about.html" class="{{ 'active' if nav == 'about' }}">About Us</a>
-      <a href="/services.html" class="{{ 'active' if nav == 'services' }}">Services</a>
-      <a href="/gallery.html" class="{{ 'active' if nav == 'gallery' }}">Gallery</a>
-      <a href="/testimonials.html" class="{{ 'active' if nav == 'testimonials' }}">Testimonials</a>
-      <a href="/faq.html" class="{{ 'active' if nav == 'faq' }}">FAQ</a>
-      <a href="/book-us.html" class="nav-book-link {{ 'active' if nav == 'book-us' }}">Book Us</a>
+      <a href="/" class="{{ 'active' if nav == 'home' }}">{{ site_text['nav.home_label'] }}</a>
+      <a href="/about.html" class="{{ 'active' if nav == 'about' }}">{{ site_text['nav.about_label'] }}</a>
+      <a href="/services.html" class="{{ 'active' if nav == 'services' }}">{{ site_text['nav.services_label'] }}</a>
+      <a href="/gallery.html" class="{{ 'active' if nav == 'gallery' }}">{{ site_text['nav.gallery_label'] }}</a>
+      <a href="/testimonials.html" class="{{ 'active' if nav == 'testimonials' }}">{{ site_text['nav.testimonials_label'] }}</a>
+      <a href="/faq.html" class="{{ 'active' if nav == 'faq' }}">{{ site_text['nav.faq_label'] }}</a>
+      <a href="/book-us.html" class="nav-book-link {{ 'active' if nav == 'book-us' }}">{{ site_text['nav.book_us_label'] }}</a>
     </nav>
     <div class="nav-cta">
-      <a href="/book-us.html" class="btn btn-gold">Book Us Now</a>
+      <a href="/book-us.html" class="btn btn-gold">{{ site_text['nav.cta_label'] }}</a>
     </div>
     <button class="theme-toggle" aria-label="Toggle dark mode"><i class="fas fa-moon"></i></button>
     <button class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
