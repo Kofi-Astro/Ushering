@@ -139,7 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
      page — see the `lightbox=True` flag in app/routers/pages.py) and
      plays that item's actual media, built from its data-* attributes
      (data-type is "image" or "video"; a video has either data-direct-src
-     for a plain <video> or data-embed-src for a YouTube/Vimeo <iframe> —
+     for a plain <video> or data-embed-src for a YouTube/Vimeo/Facebook/
+     Instagram/TikTok <iframe> —
      see app/content.py's _analyze_video_url). Elements are built with
      plain DOM APIs (not innerHTML) so a caption or embed URL an admin
      typed into the gallery form can never be interpreted as markup.
@@ -168,8 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
           video.playsInline = true;
           lightboxBox.appendChild(video);
         } else if (item.dataset.type === 'video' && item.dataset.embedSrc) {
+          // Autoplay (where the platform actually supports it) is
+          // already baked into embedSrc by app/content.py's
+          // _analyze_video_url — appending a query param here instead
+          // would double up the "?" on a Facebook embed URL, which
+          // already has one of its own (href=...).
           const iframe = document.createElement('iframe');
-          iframe.src = item.dataset.embedSrc + '?autoplay=1';
+          iframe.src = item.dataset.embedSrc;
           iframe.allow = 'autoplay; fullscreen; picture-in-picture';
           iframe.allowFullscreen = true;
           lightboxBox.appendChild(iframe);

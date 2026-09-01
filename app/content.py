@@ -19,7 +19,7 @@ request with no cache to invalidate.
 """
 
 import re
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 import markdown as md
 
@@ -75,6 +75,9 @@ def get_testimonials() -> list[dict]:
 
 _YOUTUBE_RE = re.compile(r"(?:youtu\.be/|youtube\.com/(?:watch\?v=|embed/|shorts/))([\w-]{11})")
 _VIMEO_RE = re.compile(r"vimeo\.com/(?:video/)?(\d+)")
+_FACEBOOK_VIDEO_RE = re.compile(r"(?:facebook\.com|fb\.watch)/")
+_INSTAGRAM_RE = re.compile(r"instagram\.com/(p|reel|tv)/([\w-]+)")
+_TIKTOK_RE = re.compile(r"tiktok\.com/@[\w.-]+/video/(\d+)")
 _VIDEO_FILE_EXTENSIONS = (".mp4", ".webm", ".ogg", ".mov")
 
 
@@ -83,11 +86,23 @@ def _analyze_video_url(video_url: str | None) -> dict:
     strategy, so templates never parse URLs themselves:
       - a direct file link (.mp4/.webm/.ogg/.mov) plays in a plain
         <video> tag (`direct_src`)
-      - a YouTube or Vimeo link plays in an <iframe> embed (`embed_url`),
-        and YouTube additionally gets a real thumbnail (`thumb_url`)
-        instead of the generic placeholder icon
+      - a YouTube, Vimeo, Facebook, Instagram or TikTok link plays in an
+        <iframe> embed (`embed_url`) — YouTube additionally gets a real
+        thumbnail (`thumb_url`) derived from the video ID; the others
+        don't expose one without an API call this read-only, no-network
+        function deliberately avoids, so those fall back to an uploaded
+        poster image (see app/models.py:GalleryItem) or a generic icon
       - anything unrecognized (or blank) plays nothing, same as if
         video_url were never set
+
+    Autoplay is baked directly into `embed_url` (rather than appended by
+    the caller) wherever a platform actually supports it via a query
+    param, since Facebook's URL already has one of its own (`href=...`)
+    and blindly appending `?autoplay=1` on top of that would produce a
+    broken double-`?` URL. Instagram's and TikTok's embeds don't offer a
+    reliable autoplay param at all, so those just open paused — clicking
+    the tile still opens the lightbox, the visitor presses play once
+    inside it.
     """
     url = (video_url or "").strip()
     if not url:
@@ -99,14 +114,45 @@ def _analyze_video_url(video_url: str | None) -> dict:
         video_id = youtube_match.group(1)
         return {
             "direct_src": None,
-            "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}",
+            "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1",
             "thumb_url": f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg",
         }
     vimeo_match = _VIMEO_RE.search(url)
     if vimeo_match:
         return {
             "direct_src": None,
-            "embed_url": f"https://player.vimeo.com/video/{vimeo_match.group(1)}",
+            "embed_url": f"https://player.vimeo.com/video/{vimeo_match.group(1)}?autoplay=1",
+            "thumb_url": None,
+        }
+    instagram_match = _INSTAGRAM_RE.search(url)
+    if instagram_match:
+        kind, shortcode = instagram_match.groups()
+        return {
+            "direct_src": None,
+            "embed_url": f"https://www.instagram.com/{kind}/{shortcode}/embed",
+            "thumb_url": None,
+        }
+    tiktok_match = _TIKTOK_RE.search(url)
+    if tiktok_match:
+        return {
+            "direct_src": None,
+            "embed_url": f"https://www.tiktok.com/embed/v2/{tiktok_match.group(1)}",
+            "thumb_url": None,
+        }
+    # Checked last, and just for the domain rather than a specific path
+    # shape: a shared Facebook video link's URL itself becomes the
+    # `href` the Video Plugin loads, so (unlike the platforms above)
+    # there's no ID to extract — any facebook.com/fb.watch link is
+    # assumed to be a video link, since that's the only thing this field
+    # is ever used for. A vm.tiktok.com/fb.watch *short* link (rather
+    # than the full copied-from-browser one) can't be classified this
+    # way either, since resolving it needs a network request — out of
+    # scope for this function, and rare in practice since "Copy Link"
+    # from a desktop browser already gives the full form.
+    if _FACEBOOK_VIDEO_RE.search(url):
+        return {
+            "direct_src": None,
+            "embed_url": f"https://www.facebook.com/plugins/video.php?href={quote(url, safe='')}&show_text=false&autoplay=true",
             "thumb_url": None,
         }
     return {"direct_src": None, "embed_url": None, "thumb_url": None}

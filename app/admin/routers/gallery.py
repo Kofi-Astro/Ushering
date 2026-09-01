@@ -10,11 +10,12 @@ wipe it. Attach a Railway volume mounted at images/uploads/, or move this
 to object storage (e.g. Cloudflare R2), before relying on this in
 production.
 
-Videos are handled differently: by URL only (YouTube, Vimeo, or a direct
-video file hosted elsewhere), never by uploading a video file through
-this form. Video files are typically far larger than photos, and the
-same ephemeral-disk caveat above would turn into a much bigger problem —
-filling the disk fast and losing the "upload" on the next redeploy. The
+Videos are handled differently: by URL only (YouTube, Vimeo, Facebook,
+Instagram, TikTok, or a direct video file hosted elsewhere), never by
+uploading a video file through this form. Video files are typically far
+larger than photos, and the same ephemeral-disk caveat above would turn
+into a much bigger problem — filling the disk fast and losing the
+"upload" on the next redeploy. The
 `photo` file field is still accepted for a video row, but it's reused as
 an optional poster/thumbnail image rather than the video itself.
 """
