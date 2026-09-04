@@ -26,7 +26,9 @@
       <div class="item-meta">
         {{ item.category }}
         {% if item.media_type == 'video' %}
-          {% if not item.video_url %} · no video URL set yet{% endif %}
+          {% if not item.video_url %} · no video URL set yet
+          {% elif item.id in unplayable_ids %} · <span class="warning-text">link not recognized — won't play, please re-check/re-save it</span>
+          {% endif %}
         {% elif not item.image %}
           · no photo uploaded yet
         {% endif %}

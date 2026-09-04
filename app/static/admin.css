@@ -379,6 +379,7 @@ h1, h2, h3 {
 .item-row .item-body { flex: 1; min-width: 0; }
 .item-row .item-title { font-family: var(--font-heading); font-weight: 700; color: var(--c-black); font-size: 1.05rem; }
 .item-row .item-meta { font-size: 0.84rem; color: var(--c-text-light); margin-top: 3px; }
+.item-row .warning-text { color: #a13030; font-weight: 600; }
 .item-row .item-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .item-row .item-actions a { text-decoration: none; }
 .item-row .order-badge {

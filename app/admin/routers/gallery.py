@@ -20,14 +20,17 @@ into a much bigger problem — filling the disk fast and losing the
 an optional poster/thumbnail image rather than the video itself.
 """
 
+import urllib.request
 import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from ...content import _analyze_video_url
 from ...database import get_db
 from ...models import GalleryItem
 from ...security import require_admin
@@ -41,6 +44,34 @@ UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent.parent / "images" / "
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 CATEGORIES = ["weddings", "corporate", "funerals", "conferences", "parties"]
 MEDIA_TYPES = ["image", "video"]
+
+# TikTok's mobile share sheet ("Copy Link") gives a vt.tiktok.com/
+# vm.tiktok.com short link — a pure redirect with no video ID anywhere in
+# it, unlike the @user/video/<id> form app/content.py:_analyze_video_url
+# knows how to embed. Resolved once, here, at save time (see
+# _resolve_short_link below) rather than every time the video is
+# displayed — content.py's read path is deliberately network-free, so a
+# short link saved without ever going through this form (e.g. inserted
+# directly into the database) would just silently not embed, same as
+# before this existed.
+_SHORT_LINK_HOSTS = {"vt.tiktok.com", "vm.tiktok.com"}
+
+
+def _resolve_short_link(url: str) -> str:
+    """Follows a TikTok short link's redirect to the canonical URL
+    _analyze_video_url can actually recognize. Falls back to the URL
+    exactly as entered if anything goes wrong (offline, TikTok
+    unreachable, unexpected response, timeout) — the save still succeeds
+    either way, the video just won't embed until it's re-saved with a
+    working link, exactly like today's behavior for any unrecognized URL."""
+    if urlparse(url).hostname not in _SHORT_LINK_HOSTS:
+        return url
+    try:
+        request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(request, timeout=5) as response:
+            return response.geturl()
+    except Exception:
+        return url
 
 
 def _save_upload(file: UploadFile | None) -> str | None:
@@ -64,10 +95,24 @@ def _save_upload(file: UploadFile | None) -> str | None:
 @router.get("")
 def list_gallery(request: Request, db: Session = Depends(get_db)):
     """The /gallery landing page: every photo tile (or placeholder icon,
-    for entries with no image yet), in display order."""
+    for entries with no image yet), in display order. Each video's
+    video_url is run through the exact same classifier the public site
+    uses (app/content.py:_analyze_video_url) so a link that won't
+    actually embed — an unsupported platform, a malformed URL, a TikTok
+    short link that failed to resolve — shows a clear warning here
+    instead of silently doing nothing on the live site."""
     items = db.query(GalleryItem).order_by(GalleryItem.order).all()
+    unplayable_ids = set()
+    for item in items:
+        if item.media_type != "video" or not item.video_url:
+            continue
+        classified = _analyze_video_url(item.video_url)
+        if not classified["direct_src"] and not classified["embed_url"]:
+            unplayable_ids.add(item.id)
     return templates.TemplateResponse(
-        request, "admin/gallery_list.html", {"title": "Gallery", "active": "gallery", "items": items}
+        request,
+        "admin/gallery_list.html",
+        {"title": "Gallery", "active": "gallery", "items": items, "unplayable_ids": unplayable_ids},
     )
 
 
@@ -101,6 +146,7 @@ def create_gallery_item(
     if media_type not in MEDIA_TYPES:
         media_type = "image"
     image_path = _save_upload(photo) or ""
+    resolved_video_url = _resolve_short_link(video_url.strip()) if media_type == "video" and video_url.strip() else None
     db.add(
         GalleryItem(
             label=label,
@@ -108,7 +154,7 @@ def create_gallery_item(
             order=order,
             image=image_path,
             media_type=media_type,
-            video_url=(video_url.strip() or None) if media_type == "video" else None,
+            video_url=resolved_video_url,
             is_hero=bool(is_hero) if media_type == "video" else False,
         )
     )
@@ -152,7 +198,9 @@ def update_gallery_item(
         item.category = category
         item.order = order
         item.media_type = media_type
-        item.video_url = (video_url.strip() or None) if media_type == "video" else None
+        item.video_url = (
+            _resolve_short_link(video_url.strip()) if media_type == "video" and video_url.strip() else None
+        )
         item.is_hero = bool(is_hero) if media_type == "video" else False
         new_image = _save_upload(photo)
         if new_image:
