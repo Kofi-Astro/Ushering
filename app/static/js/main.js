@@ -133,30 +133,54 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* Gallery lightbox: clicking any tile (or a "Watch Highlights"-style
-     trigger button, see templates/pages/index.html's hero section) opens
-     the full-screen overlay (present on the Gallery page and the Home
-     page — see the `lightbox=True` flag in app/routers/pages.py) and
-     plays that item's actual media, built from its data-* attributes
-     (data-type is "image" or "video"; a video has either data-direct-src
-     for a plain <video> or data-embed-src for a YouTube/Vimeo/Facebook/
-     Instagram/TikTok <iframe> —
-     see app/content.py's _analyze_video_url). Elements are built with
-     plain DOM APIs (not innerHTML) so a caption or embed URL an admin
-     typed into the gallery form can never be interpreted as markup.
-     Closes via the explicit close button or the dark backdrop itself
-     (the `e.target === lightbox` check distinguishes a click on the
-     backdrop from one bubbling up from its contents) — either way the
-     media is removed immediately so a playing video/audio actually stops. */
+  /* Gallery lightbox: clicking any tile (or the homepage hero's "Watch
+     Our Videos" button, see templates/pages/index.html) opens the
+     full-screen overlay (present on the Gallery page and the Home page —
+     see the `lightbox=True` flag in app/routers/pages.py) and plays that
+     item's actual media, built from its data-* attributes (data-type is
+     "image" or "video"; a video has either data-direct-src for a plain
+     <video> or data-embed-src for a YouTube/Vimeo/Facebook/Instagram/
+     TikTok <iframe> — see app/content.py's _analyze_video_url). Elements
+     are built with plain DOM APIs (not innerHTML) so a caption or embed
+     URL an admin typed into the gallery form can never be interpreted as
+     markup. Closes via the explicit close button or the dark backdrop
+     itself (the `e.target === lightbox` check distinguishes a click on
+     the backdrop from one bubbling up from its contents) — either way
+     the media is removed immediately so a playing video/audio actually
+     stops.
+
+     Prev/Next only apply when the trigger carries a data-playlist (a
+     JSON array of {label, embed_url}) — currently just the homepage's
+     single "Watch Our Videos" button, which represents every video an
+     admin marked hero rather than getting one button each (see
+     app/routers/pages.py:_hero_video_context for why). A plain gallery
+     tile click has no playlist, so the arrows stay hidden for it. */
   const lightbox = document.querySelector('.lightbox');
   if (lightbox) {
     const lightboxCaption = lightbox.querySelector('.lightbox-caption');
     const lightboxBox = lightbox.querySelector('.lightbox-box');
+    const lightboxPrev = lightbox.querySelector('.lightbox-prev');
+    const lightboxNext = lightbox.querySelector('.lightbox-next');
     const lightboxTriggers = document.querySelectorAll('.gallery-item, .lightbox-trigger');
+    let playlist = null;
+    let playlistIndex = 0;
+
+    const renderEmbedVideo = (label, embedSrc) => {
+      lightboxCaption.textContent = label || '';
+      lightboxBox.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.src = embedSrc;
+      iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+      iframe.allowFullscreen = true;
+      lightboxBox.appendChild(iframe);
+    };
+
     const closeLightbox = () => {
       lightbox.classList.remove('open');
       lightboxBox.innerHTML = '';
+      playlist = null;
     };
+
     lightboxTriggers.forEach((item) => {
       item.addEventListener('click', () => {
         lightboxCaption.textContent = item.dataset.label || '';
@@ -189,9 +213,35 @@ document.addEventListener('DOMContentLoaded', () => {
           icon.className = item.dataset.type === 'video' ? 'fas fa-video' : 'fas fa-image';
           lightboxBox.appendChild(icon);
         }
+
+        playlist = null;
+        playlistIndex = 0;
+        if (item.dataset.playlist) {
+          try {
+            const parsed = JSON.parse(item.dataset.playlist);
+            if (Array.isArray(parsed) && parsed.length > 1) playlist = parsed;
+          } catch (e) {
+            playlist = null;
+          }
+        }
+        lightboxPrev.hidden = !playlist;
+        lightboxNext.hidden = !playlist;
+
         lightbox.classList.add('open');
       });
     });
+
+    lightboxPrev.addEventListener('click', () => {
+      if (!playlist) return;
+      playlistIndex = (playlistIndex - 1 + playlist.length) % playlist.length;
+      renderEmbedVideo(playlist[playlistIndex].label, playlist[playlistIndex].embed_url);
+    });
+    lightboxNext.addEventListener('click', () => {
+      if (!playlist) return;
+      playlistIndex = (playlistIndex + 1) % playlist.length;
+      renderEmbedVideo(playlist[playlistIndex].label, playlist[playlistIndex].embed_url);
+    });
+
     lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', (e) => {
       if (e.target === lightbox) closeLightbox();

@@ -1,16 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
 <!--
-  hero_direct_videos / hero_embed_videos / hero_playlist_json (built by
+  hero_direct_videos / hero_embed_videos (built by
   app/routers/pages.py:_hero_video_context from every GalleryItem an
   admin marked "Feature as hero video", see app/content.py:get_hero_videos)
   split by playback strategy: direct video files cycle silently through
   the full-bleed background below, one after another, via
   data-hero-playlist and static/js/main.js — a true autoplaying background
   loop isn't reliable for an embedded YouTube/Vimeo/Facebook/Instagram/
-  TikTok iframe, so those
-  instead each get their own "Watch" button that opens in the same
-  lightbox the Gallery page uses.
+  TikTok iframe, so those instead share a single "Watch Our Videos"
+  button (see _hero_video_context's docstring for why it's one button
+  regardless of how many are marked, not one per video) that opens the
+  first one in the same lightbox the Gallery page uses, with Prev/Next
+  controls (data-playlist, also wired up in main.js) to step through the
+  rest without leaving the lightbox.
 -->
 <section class="hero{% if hero_direct_videos %} hero-has-video{% endif %}">
   {% if hero_direct_videos %}
@@ -25,11 +28,11 @@
     <div class="hero-buttons">
       <a href="/book-us.html" class="btn btn-gold">{{ site_text['home.hero.cta_primary'] }}</a>
       <a href="/services.html" class="btn btn-outline">{{ site_text['home.hero.cta_secondary'] }}</a>
-      {% for v in hero_embed_videos %}
-      <button type="button" class="btn btn-outline lightbox-trigger" data-label="{{ v.label }}" data-type="video" data-embed-src="{{ v.embed_url }}">
-        <i class="fas fa-circle-play"></i> {{ v.label }}
+      {% if hero_embed_videos %}
+      <button type="button" class="btn btn-outline lightbox-trigger" data-label="{{ hero_embed_videos[0].label }}" data-type="video" data-embed-src="{{ hero_embed_videos[0].embed_url }}" data-playlist='{{ hero_embed_playlist_json }}'>
+        <i class="fas fa-circle-play"></i> {{ site_text['home.hero.watch_button'] }}
       </button>
-      {% endfor %}
+      {% endif %}
     </div>
     <div class="hero-stats">
       <div>

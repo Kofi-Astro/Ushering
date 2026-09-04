@@ -45,10 +45,22 @@ def base_context(request: Request, **extra) -> dict:
 def _hero_video_context() -> dict:
     """Splits content.get_hero_videos() into the two ways
     templates/pages/index.html's hero section uses them (see that
-    template's comment for why) and pre-serializes the direct-file ones
-    into JSON for static/js/main.js's cycling logic — building that here
-    rather than in the template keeps the "what does each video need for
-    playback" logic in one place instead of duplicated in Jinja."""
+    template's comment for why) and pre-serializes each into the JSON
+    static/js/main.js needs for its own kind of cycling — building that
+    here rather than in the template keeps the "what does each video need
+    for playback" logic in one place instead of duplicated in Jinja.
+
+    Direct-file videos cycle silently in the background (hero_playlist_json,
+    consumed by the <video> element itself). Embed videos (YouTube/Vimeo/
+    Facebook/Instagram/TikTok) can't do that — they get exactly ONE "Watch
+    Our Videos" button regardless of how many are marked hero, rather than
+    one button per video: with a business owner marking every video they
+    add as "hero" (a reasonable reading of that checkbox from their side,
+    even though it's meant to flag homepage-worthy videos specifically),
+    one-button-per-video very quickly clutters the hero into a wall of
+    buttons labeled with whatever caption the video happened to have.
+    hero_embed_playlist_json carries the full set so the lightbox can still
+    step through all of them via its own Prev/Next controls once opened."""
     hero_videos = content.get_hero_videos()
     direct_videos = [v for v in hero_videos if v["direct_src"]]
     embed_videos = [v for v in hero_videos if v["embed_url"]]
@@ -57,6 +69,9 @@ def _hero_video_context() -> dict:
         "hero_embed_videos": embed_videos,
         "hero_playlist_json": json.dumps(
             [{"src": v["direct_src"], "poster": v["image"] or None} for v in direct_videos]
+        ),
+        "hero_embed_playlist_json": json.dumps(
+            [{"label": v["label"], "embed_url": v["embed_url"]} for v in embed_videos]
         ),
     }
 

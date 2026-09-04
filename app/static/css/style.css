@@ -688,6 +688,32 @@ section { padding: 90px 0; }
   font-size: 1.8rem;
   background: none; border: none; cursor: pointer;
 }
+.lightbox-prev,
+.lightbox-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--c-white);
+  font-size: 1.6rem;
+  background: rgba(255,255,255,0.12);
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+}
+.lightbox-prev:hover,
+.lightbox-next:hover { background: rgba(255,255,255,0.28); }
+.lightbox-prev { left: 24px; }
+.lightbox-next { right: 24px; }
+@media (max-width: 700px) {
+  .lightbox-prev { left: 8px; }
+  .lightbox-next { right: 8px; }
+}
 
 /* ---------- Testimonials ---------- */
 .testi-track {

@@ -69,6 +69,7 @@ GROUPS: dict[str, TextGroup] = {
             TextField("home.hero.lead", "Hero paragraph", "GPS Ushering and Events delivers polished guest coordination, hospitality and registration support for weddings, corporate events, funerals, conferences, birthdays, concerts and special occasions across Ghana.", long=True),
             TextField("home.hero.cta_primary", "Hero button 1", "Book Us Now"),
             TextField("home.hero.cta_secondary", "Hero button 2", "View Our Services"),
+            TextField("home.hero.watch_button", "Hero \"Watch Our Videos\" button (shown only when a video is marked hero)", "Watch Our Videos"),
             TextField("home.hero.stat1_number", "Stat 1 number", "500+"),
             TextField("home.hero.stat1_label", "Stat 1 label", "Events Covered"),
             TextField("home.hero.stat2_number", "Stat 2 number", "100+"),
