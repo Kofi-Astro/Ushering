@@ -11,7 +11,17 @@
 <section>
   <div class="container split">
     <div class="split-media">
-      <div class="media-frame"><i class="fas fa-images"></i><span class="frame-note">{{ site_text['about.media_note'] }}</span></div>
+      <!-- featured_photo (see app/routers/pages.py:_featured_photos_for_home_and_about)
+           is a real uploaded Gallery photo, if any — falls back to the
+           placeholder note below only until the business owner has
+           uploaded at least one real photo. -->
+      <div class="media-frame">
+        {% if featured_photo %}
+        <img src="{{ featured_photo.image }}" alt="{{ featured_photo.label }}">
+        {% else %}
+        <i class="fas fa-images"></i><span class="frame-note">{{ site_text['about.media_note'] }}</span>
+        {% endif %}
+      </div>
       <div class="media-accent"></div>
     </div>
     <div class="split-body">

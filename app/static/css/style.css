@@ -431,6 +431,11 @@ section { padding: 90px 0; }
   position: relative;
   overflow: hidden;
 }
+.media-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .media-frame .frame-note {
   position: absolute;
   bottom: 16px;

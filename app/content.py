@@ -185,6 +185,26 @@ def get_gallery_items() -> list[dict]:
         return [_gallery_item_dict(g) for g in rows]
 
 
+def get_featured_photos(count: int) -> list[dict]:
+    """The first `count` real uploaded photos (media_type == "image" with
+    an actual image, lowest `order` first) — used to fill the Home and
+    About pages' "team photo" spot with something real instead of the
+    static "photo to be added" placeholder the moment the business owner
+    has uploaded anything to the Gallery, no separate "feature this photo"
+    step required. Returns fewer than `count` (or none at all) if that
+    many real photos don't exist yet; callers fall back to the original
+    placeholder for whichever slots come back empty."""
+    with SessionLocal() as db:
+        rows = (
+            db.query(GalleryItem)
+            .filter(GalleryItem.media_type == "image", GalleryItem.image != "")
+            .order_by(GalleryItem.order)
+            .limit(count)
+            .all()
+        )
+        return [_gallery_item_dict(g) for g in rows]
+
+
 def get_hero_videos() -> list[dict]:
     """Every video marked "Feature as hero video" in the admin Gallery
     section, ordered for display (see app/routers/pages.py:home and
