@@ -498,6 +498,69 @@ h1, h2, h3 {
 .booking-card.status-completed { border-left-color: var(--c-text-light); }
 .booking-card.status-cancelled { border-left-color: #999; opacity: 0.65; }
 
+/* ---------- Bookings calendar ---------- */
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+.calendar-nav h3 { font-size: 1.3rem; min-width: 200px; text-align: center; }
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.calendar-weekday {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--c-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 6px;
+}
+.calendar-day {
+  background: var(--c-white);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  min-height: 110px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.calendar-day.empty { background: transparent; border: none; }
+.calendar-day.today { border-color: var(--c-gold); border-width: 2px; }
+.calendar-day .day-num { font-size: 0.85rem; font-weight: 700; color: var(--c-black); }
+.calendar-day.today .day-num { color: var(--c-gold); }
+.calendar-chip {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--c-cream);
+  color: var(--c-text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: 3px solid var(--c-wine);
+}
+.calendar-chip:hover { background: #f0ebe0; }
+.calendar-chip.status-new { border-left-color: var(--c-wine); }
+.calendar-chip.status-contacted { border-left-color: var(--c-gold); }
+.calendar-chip.status-confirmed { border-left-color: #2f6d3a; }
+.calendar-chip.status-completed { border-left-color: var(--c-text-light); }
+.calendar-chip.status-cancelled { border-left-color: #999; opacity: 0.6; text-decoration: line-through; }
+@media (max-width: 900px) {
+  .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .calendar-day { min-height: 70px; padding: 5px; font-size: 0.8rem; }
+  .calendar-chip { font-size: 0.62rem; padding: 2px 4px; }
+}
+
 .booking-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
 .booking-top h3 { font-size: 1.15rem; }
 .event-type { color: var(--c-wine); font-size: 0.82rem; font-weight: 600; }

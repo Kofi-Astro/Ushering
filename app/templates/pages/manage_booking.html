@@ -26,7 +26,7 @@
         <h3>This Booking Is Already {{ booking.status.value | capitalize }}</h3>
         <p>Once we've confirmed your event, changes go through us directly rather than this page, so nothing shifts unexpectedly after we've committed a team to it. Reach out to us on WhatsApp or by phone and we'll be glad to help.</p>
         <div class="contact-social" style="margin-top:20px;">
-          <a href="https://wa.me/{{ settings.whatsapp_number }}" class="btn btn-wine" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Chat on WhatsApp</a>
+          <a href="https://wa.me/{{ settings.whatsapp_number }}?text={{ ('Hi, this is ' ~ booking.name ~ '. I have a question about my ' ~ booking.event_type ~ ' booking.') | urlencode }}" class="btn btn-wine" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Chat on WhatsApp</a>
         </div>
         <hr style="margin:28px 0; border:none; border-top:1px solid var(--border);">
         <h3>Your Booking Details</h3>

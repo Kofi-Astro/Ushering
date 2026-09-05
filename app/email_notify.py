@@ -109,6 +109,38 @@ Once we've confirmed your event, changes go through us directly.)
     )
 
 
+_STATUS_MESSAGES = {
+    "contacted": "We've reached out about your booking and will follow up shortly to confirm the details.",
+    "confirmed": "Great news — your event is confirmed! We're looking forward to it.",
+    "completed": "Thank you for choosing GPS Ushering and Events — we hope your event went smoothly!",
+    "cancelled": "Your booking has been cancelled. If this wasn't expected, please reach out to us directly.",
+}
+
+
+def send_booking_status_update(booking: dict, recipient_email: str, manage_url: str, new_status: str) -> None:
+    """Emails the customer whenever the business owner moves their booking
+    to a new status in the admin panel (see app/admin/routers/bookings.py)
+    — otherwise a customer has no way to find out their event was
+    confirmed (or cancelled) short of the business calling them directly.
+    Not sent for "new", since that's the status a booking already starts
+    at when send_customer_confirmation covers it."""
+    if new_status not in _STATUS_MESSAGES:
+        return
+    _send(
+        subject=f"Update on your booking — {booking['event_type']}",
+        recipient_email=recipient_email,
+        body=f"""Hi {booking['name']},
+
+{_STATUS_MESSAGES[new_status]}
+
+Event type: {booking['event_type']}
+Event date: {booking['event_date'] or "Not provided"}
+
+View or manage your booking here: {manage_url}
+""",
+    )
+
+
 def send_password_reset_email(reset_url: str, recipient_email: str) -> None:
     """Emails the admin password-reset link. Unlike every other function
     in this file, there's no on-screen fallback for this one — showing

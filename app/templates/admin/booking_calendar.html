@@ -1,0 +1,59 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Bookings Calendar</h2>
+  <a href="/bookings" class="btn-secondary"><i class="fas fa-list"></i> Back to List</a>
+</div>
+
+<div class="calendar-nav">
+  <a href="/bookings/calendar?year={{ prev_year }}&month={{ prev_month }}" class="btn-secondary"><i class="fas fa-chevron-left"></i></a>
+  <h3>{{ month_name }} {{ year }}</h3>
+  <a href="/bookings/calendar?year={{ next_year }}&month={{ next_month }}" class="btn-secondary"><i class="fas fa-chevron-right"></i></a>
+</div>
+
+<div class="calendar-grid">
+  <div class="calendar-weekday">Mon</div>
+  <div class="calendar-weekday">Tue</div>
+  <div class="calendar-weekday">Wed</div>
+  <div class="calendar-weekday">Thu</div>
+  <div class="calendar-weekday">Fri</div>
+  <div class="calendar-weekday">Sat</div>
+  <div class="calendar-weekday">Sun</div>
+
+  {% for week in weeks %}
+    {% for day in week %}
+    {% if day == 0 %}
+    <div class="calendar-day empty"></div>
+    {% else %}
+    <div class="calendar-day{{ ' today' if today.year == year and today.month == month and today.day == day }}">
+      <span class="day-num">{{ day }}</span>
+      {% for b in by_day.get(day, []) %}
+      <a href="/bookings/{{ b.id }}/edit" class="calendar-chip status-{{ b.status.value }}" title="{{ b.name }} — {{ b.event_type }} ({{ b.status.value }})">{{ b.name }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endfor %}
+  {% endfor %}
+</div>
+
+{% if unscheduled %}
+<div class="section-toolbar" style="margin-top:40px;">
+  <h2>Needs a Valid Date</h2>
+</div>
+<p class="empty" style="padding:20px 0;">These bookings have no event date, or one that isn't a recognizable date (e.g. typed as free text) — set a real date on the booking's edit page to have it appear on the calendar above.</p>
+<div class="item-list">
+  {% for b in unscheduled %}
+  <div class="item-row">
+    <div class="item-thumb"><i class="fas fa-calendar-xmark"></i></div>
+    <div class="item-body">
+      <div class="item-title">{{ b.name }}</div>
+      <div class="item-meta">{{ b.event_type }} · {{ b.event_date or "no date provided" }}</div>
+    </div>
+    <div class="item-actions">
+      <a href="/bookings/{{ b.id }}/edit" class="btn-secondary">Edit</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

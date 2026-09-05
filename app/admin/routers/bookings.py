@@ -12,9 +12,11 @@ There's no create here — bookings are only ever created by the public
 form (app/routers/bookings.py).
 """
 
+import calendar as calendar_module
+from datetime import date
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func
@@ -22,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from ...content import get_site_settings
 from ...database import get_db
+from ...email_notify import send_booking_status_update
 from ...models import Booking, BookingStatus
 from ...security import require_admin
 
@@ -58,16 +61,95 @@ def list_bookings(request: Request, status: str | None = None, db: Session = Dep
     )
 
 
+def _queue_status_email(background_tasks: BackgroundTasks, booking: Booking) -> None:
+    """Queues send_booking_status_update if (and only if) this booking has
+    an email address to send to — shared by both update_status and
+    update_booking below, the two places a booking's status can change.
+    Builds a plain dict from the ORM object here, before the request's DB
+    session closes, rather than passing `booking` itself into the
+    background task — see email_notify.py's module docstring for why."""
+    if not booking.email:
+        return
+    site_url = get_site_settings()["site_url"].rstrip("/")
+    manage_url = f"{site_url}/manage-booking/{booking.manage_token}"
+    booking_data = {
+        "name": booking.name,
+        "event_type": booking.event_type,
+        "event_date": booking.event_date,
+    }
+    background_tasks.add_task(send_booking_status_update, booking_data, booking.email, manage_url, booking.status.value)
+
+
+@router.get("/calendar")
+def bookings_calendar(request: Request, year: int | None = None, month: int | None = None, db: Session = Depends(get_db)):
+    """A month-grid view of every booking with a real (YYYY-MM-DD) event
+    date, for spotting scheduling conflicts at a glance rather than
+    scanning the full list. `event_date` is a free-text field — filled in
+    by a proper <input type="date"> on the public Book Us form, but
+    editable as plain text afterwards (see admin/booking_form.html and
+    templates/pages/manage_booking.html) — so anything that doesn't parse
+    as an actual date is shown in a separate "needs a valid date" list
+    below the grid instead of being silently dropped from view."""
+    today = date.today()
+    year = year or today.year
+    month = month or today.month
+    month = max(1, min(12, month))
+
+    bookings = db.query(Booking).all()
+    by_day: dict[int, list[Booking]] = {}
+    unscheduled = []
+    for b in bookings:
+        parsed = None
+        if b.event_date:
+            try:
+                parsed = date.fromisoformat(b.event_date.strip())
+            except ValueError:
+                parsed = None
+        if parsed is None:
+            unscheduled.append(b)
+        elif parsed.year == year and parsed.month == month:
+            by_day.setdefault(parsed.day, []).append(b)
+
+    prev_month, prev_year = (12, year - 1) if month == 1 else (month - 1, year)
+    next_month, next_year = (1, year + 1) if month == 12 else (month + 1, year)
+
+    return templates.TemplateResponse(
+        request,
+        "admin/booking_calendar.html",
+        {
+            "title": "Bookings Calendar",
+            "active": "bookings",
+            "year": year,
+            "month": month,
+            "month_name": calendar_module.month_name[month],
+            "weeks": calendar_module.Calendar(firstweekday=0).monthdayscalendar(year, month),
+            "by_day": by_day,
+            "unscheduled": unscheduled,
+            "today": today,
+            "prev_year": prev_year,
+            "prev_month": prev_month,
+            "next_year": next_year,
+            "next_month": next_month,
+        },
+    )
+
+
 @router.post("/{booking_id}/status")
-def update_status(booking_id: int, status: str = Form(...), db: Session = Depends(get_db)):
+def update_status(booking_id: int, background_tasks: BackgroundTasks, status: str = Form(...), db: Session = Depends(get_db)):
     """Handles the per-booking status dropdown + Update button in
     admin/bookings.html. Silently does nothing if the id doesn't exist
     (shouldn't happen in normal use, but no need to error over it) and
-    then always redirects back to the list either way."""
+    then always redirects back to the list either way. Only emails the
+    customer if the status is actually changing — editing the form and
+    re-selecting the same status shouldn't re-notify them."""
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking:
-        booking.status = BookingStatus(status)
+        new_status = BookingStatus(status)
+        status_changed = new_status != booking.status
+        booking.status = new_status
         db.commit()
+        if status_changed:
+            _queue_status_email(background_tasks, booking)
     return RedirectResponse(url="/bookings", status_code=303)
 
 
@@ -97,6 +179,7 @@ def edit_booking_form(booking_id: int, request: Request, db: Session = Depends(g
 @router.post("/{booking_id}/edit")
 def update_booking(
     booking_id: int,
+    background_tasks: BackgroundTasks,
     name: str = Form(...),
     phone: str = Form(...),
     email: str = Form(...),
@@ -118,9 +201,14 @@ def update_booking(
     normalized to None below to match how the public booking form stores
     "not provided" (see app/routers/bookings.py) — keeps the two write
     paths consistent rather than one using "" and the other using null
-    for the same "nothing here" meaning."""
+    for the same "nothing here" meaning. Only emails the customer about
+    the status specifically if it's actually changing here too (see
+    update_status above) — editing, say, just the guest count shouldn't
+    also re-send a "your booking is confirmed" email."""
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking:
+        new_status = BookingStatus(status)
+        status_changed = new_status != booking.status
         booking.name = name
         booking.phone = phone
         booking.email = email
@@ -129,11 +217,13 @@ def update_booking(
         booking.guest_count = guest_count or None
         booking.location = location or None
         booking.message = message or None
-        booking.status = BookingStatus(status)
+        booking.status = new_status
         booking.amount_charged = amount_charged or None
         booking.deposit_paid = deposit_paid or None
         booking.full_payment_date = full_payment_date or None
         db.commit()
+        if status_changed:
+            _queue_status_email(background_tasks, booking)
     return RedirectResponse(url="/bookings", status_code=303)
 
 
