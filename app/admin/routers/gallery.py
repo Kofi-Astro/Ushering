@@ -107,7 +107,7 @@ def list_gallery(request: Request, db: Session = Depends(get_db)):
         if item.media_type != "video" or not item.video_url:
             continue
         classified = _analyze_video_url(item.video_url)
-        if not classified["direct_src"] and not classified["embed_url"]:
+        if not classified["direct_src"] and not classified["embed_url"] and not classified["external_url"]:
             unplayable_ids.add(item.id)
     return templates.TemplateResponse(
         request,

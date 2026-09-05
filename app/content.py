@@ -82,17 +82,32 @@ _TIKTOK_RE = re.compile(r"tiktok\.com/@[\w.-]+/video/(\d+)")
 _VIDEO_FILE_EXTENSIONS = (".mp4", ".webm", ".ogg", ".mov")
 
 
+_EMPTY_VIDEO = {"direct_src": None, "embed_url": None, "external_url": None, "thumb_url": None}
+
+
 def _analyze_video_url(video_url: str | None) -> dict:
     """Classifies a GalleryItem's video_url into exactly one playback
     strategy, so templates never parse URLs themselves:
       - a direct file link (.mp4/.webm/.ogg/.mov) plays in a plain
         <video> tag (`direct_src`)
-      - a YouTube, Vimeo, Facebook, Instagram or TikTok link plays in an
+      - a YouTube, Vimeo, Facebook or TikTok link plays inline in an
         <iframe> embed (`embed_url`) — YouTube additionally gets a real
         thumbnail (`thumb_url`) derived from the video ID; the others
         don't expose one without an API call this read-only, no-network
         function deliberately avoids, so those fall back to an uploaded
         poster image (see app/models.py:GalleryItem) or a generic icon
+      - an Instagram link gets `external_url` instead of `embed_url`:
+        Instagram's public embed isn't actually inline-playable the way
+        the others are — clicking play on its bare iframe navigates the
+        page to instagram.com regardless (verified directly: it opens a
+        second navigation the moment the embed's own "Watch on
+        Instagram" prompt is clicked, there's no way to suppress that
+        without their JS SDK, which still shows the same prompt). Rather
+        than pretend it's an inline video and have that navigation
+        surprise someone mid-lightbox, callers treat external_url as
+        "open this in a new tab" from the start — see
+        static/js/main.js's lightbox handler and templates/pages/
+        gallery.html's per-tile markup.
       - anything unrecognized (or blank) plays nothing, same as if
         video_url were never set
 
@@ -100,46 +115,33 @@ def _analyze_video_url(video_url: str | None) -> dict:
     the caller) wherever a platform actually supports it via a query
     param, since Facebook's URL already has one of its own (`href=...`)
     and blindly appending `?autoplay=1` on top of that would produce a
-    broken double-`?` URL. Instagram's and TikTok's embeds don't offer a
-    reliable autoplay param at all, so those just open paused — clicking
-    the tile still opens the lightbox, the visitor presses play once
-    inside it.
+    broken double-`?` URL. TikTok's embed doesn't offer a reliable
+    autoplay param at all, so that one just opens paused — clicking the
+    tile still opens the lightbox, the visitor presses play once inside it.
     """
     url = (video_url or "").strip()
     if not url:
-        return {"direct_src": None, "embed_url": None, "thumb_url": None}
+        return dict(_EMPTY_VIDEO)
     if url.lower().split("?")[0].endswith(_VIDEO_FILE_EXTENSIONS):
-        return {"direct_src": url, "embed_url": None, "thumb_url": None}
+        return {**_EMPTY_VIDEO, "direct_src": url}
     youtube_match = _YOUTUBE_RE.search(url)
     if youtube_match:
         video_id = youtube_match.group(1)
         return {
-            "direct_src": None,
+            **_EMPTY_VIDEO,
             "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1",
             "thumb_url": f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg",
         }
     vimeo_match = _VIMEO_RE.search(url)
     if vimeo_match:
-        return {
-            "direct_src": None,
-            "embed_url": f"https://player.vimeo.com/video/{vimeo_match.group(1)}?autoplay=1",
-            "thumb_url": None,
-        }
+        return {**_EMPTY_VIDEO, "embed_url": f"https://player.vimeo.com/video/{vimeo_match.group(1)}?autoplay=1"}
     instagram_match = _INSTAGRAM_RE.search(url)
     if instagram_match:
         kind, shortcode = instagram_match.groups()
-        return {
-            "direct_src": None,
-            "embed_url": f"https://www.instagram.com/{kind}/{shortcode}/embed",
-            "thumb_url": None,
-        }
+        return {**_EMPTY_VIDEO, "external_url": f"https://www.instagram.com/{kind}/{shortcode}/"}
     tiktok_match = _TIKTOK_RE.search(url)
     if tiktok_match:
-        return {
-            "direct_src": None,
-            "embed_url": f"https://www.tiktok.com/embed/v2/{tiktok_match.group(1)}",
-            "thumb_url": None,
-        }
+        return {**_EMPTY_VIDEO, "embed_url": f"https://www.tiktok.com/embed/v2/{tiktok_match.group(1)}"}
     # Checked last, and just for the domain rather than a specific path
     # shape: a shared Facebook video link's URL itself becomes the
     # `href` the Video Plugin loads, so (unlike the platforms above)
@@ -152,11 +154,10 @@ def _analyze_video_url(video_url: str | None) -> dict:
     # from a desktop browser already gives the full form.
     if _FACEBOOK_VIDEO_RE.search(url):
         return {
-            "direct_src": None,
+            **_EMPTY_VIDEO,
             "embed_url": f"https://www.facebook.com/plugins/video.php?href={quote(url, safe='')}&show_text=false&autoplay=true",
-            "thumb_url": None,
         }
-    return {"direct_src": None, "embed_url": None, "thumb_url": None}
+    return dict(_EMPTY_VIDEO)
 
 
 def _gallery_item_dict(g: GalleryItem) -> dict:

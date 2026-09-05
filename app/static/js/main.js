@@ -139,8 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
      see the `lightbox=True` flag in app/routers/pages.py) and plays that
      item's actual media, built from its data-* attributes (data-type is
      "image" or "video"; a video has either data-direct-src for a plain
-     <video> or data-embed-src for a YouTube/Vimeo/Facebook/Instagram/
-     TikTok <iframe> — see app/content.py's _analyze_video_url). Elements
+     <video> or data-embed-src for a YouTube/Vimeo/Facebook/TikTok
+     <iframe> (Instagram videos aren't handled here at all — see
+     app/content.py's _analyze_video_url and templates/pages/gallery.html
+     for why they're plain external links instead). Elements
      are built with plain DOM APIs (not innerHTML) so a caption or embed
      URL an admin typed into the gallery form can never be interpreted as
      markup. Closes via the explicit close button or the dark backdrop
@@ -161,7 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const lightboxBox = lightbox.querySelector('.lightbox-box');
     const lightboxPrev = lightbox.querySelector('.lightbox-prev');
     const lightboxNext = lightbox.querySelector('.lightbox-next');
-    const lightboxTriggers = document.querySelectorAll('.gallery-item, .lightbox-trigger');
+    // Excludes <a> tiles (Instagram videos — see templates/pages/
+    // gallery.html) so they just navigate normally instead of also
+    // opening an empty lightbox behind the new tab.
+    const lightboxTriggers = document.querySelectorAll('.gallery-item:not(a), .lightbox-trigger');
     let playlist = null;
     let playlistIndex = 0;
 

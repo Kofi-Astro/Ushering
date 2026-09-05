@@ -641,6 +641,12 @@ section { padding: 90px 0; }
   transition: background var(--transition);
 }
 .gallery-item:hover .play-badge { background: var(--c-wine); }
+/* Distinct from the plain play badge — this tile opens the real
+   Instagram post in a new tab instead of playing inline (see
+   templates/pages/gallery.html), so the icon and hover accent are
+   deliberately different from .play-badge's "plays here" look. */
+.gallery-item .play-badge.external { font-size: 0.95rem; }
+.gallery-item:hover .play-badge.external { background: var(--c-navy); }
 
 /* Lightbox */
 .lightbox {

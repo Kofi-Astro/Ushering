@@ -103,6 +103,16 @@
     </div>
     <div class="gallery-grid">
       {% for item in gallery_items %}
+      {% if item.media_type == 'video' and item.external_url %}
+      <a class="gallery-item" href="{{ item.external_url }}" target="_blank" rel="noopener" data-label="{{ item.label }}">
+        {% if item.image %}
+        <img src="{{ item.image }}" alt="{{ item.label }}" loading="lazy">
+        {% else %}
+        <i class="fas fa-video"></i>
+        {% endif %}
+        <span class="play-badge external"><i class="fas fa-arrow-up-right-from-square"></i></span>
+      </a>
+      {% else %}
       <div class="gallery-item" data-label="{{ item.label }}" data-type="{{ item.media_type }}"
            {% if item.media_type == 'video' %}data-direct-src="{{ item.direct_src or '' }}" data-embed-src="{{ item.embed_url or '' }}"{% else %}data-image-src="{{ item.image or '' }}"{% endif %}>
         {% if item.media_type == 'video' %}
@@ -123,6 +133,7 @@
           {% endif %}
         {% endif %}
       </div>
+      {% endif %}
       {% endfor %}
     </div>
     <div class="text-center mt-40">
