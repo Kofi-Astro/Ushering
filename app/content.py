@@ -23,6 +23,7 @@ from urllib.parse import parse_qs, quote, urlparse
 
 import markdown as md
 
+from . import storage
 from .database import SessionLocal
 from .models import FAQItem, GalleryItem, Service, SiteSetting, SiteText, TeamPhoto, Testimonial
 from .site_text_catalog import all_fields
@@ -122,6 +123,14 @@ def _analyze_video_url(video_url: str | None) -> dict:
     url = (video_url or "").strip()
     if not url:
         return dict(_EMPTY_VIDEO)
+    if url.startswith(storage.KEY_PREFIX):
+        # An uploaded video file living in the Railway Bucket (see
+        # app/storage.py) rather than an external link or a local
+        # /images/uploads/ path — generating its presigned playback URL
+        # is a local signing operation, not a network call, so this stays
+        # consistent with the rest of this module never hitting the network.
+        key = url[len(storage.KEY_PREFIX):]
+        return {**_EMPTY_VIDEO, "direct_src": storage.generate_playback_url(key)}
     if url.lower().split("?")[0].endswith(_VIDEO_FILE_EXTENSIONS):
         return {**_EMPTY_VIDEO, "direct_src": url}
     youtube_match = _YOUTUBE_RE.search(url)

@@ -62,6 +62,25 @@ class Settings(BaseSettings):
     smtp_username: str = ""
     smtp_password: str = ""
 
+    # S3-compatible object storage (a Railway Bucket — see `railway bucket`
+    # in the CLI) for uploaded video files specifically. Left blank by
+    # default: app/storage.py's bucket_configured() lets callers fall back
+    # to local-disk upload (the ephemeral-disk caveat that doesn't apply to
+    # photos, since those are small and backed by a persistent volume — see
+    # app/admin/routers/gallery.py) rather than erroring before this is set
+    # up. See app/admin/routers/gallery.py's module docstring for why video
+    # specifically needs a real bucket rather than the volume: video files
+    # are large enough that routing them through this app's own request
+    # handling at all (even just to write them to the volume) turned out to
+    # trip some upstream size/rate protection ("overload-protect") — a
+    # presigned direct browser-to-bucket upload avoids this app ever
+    # touching the video bytes.
+    bucket_endpoint: str = ""
+    bucket_access_key_id: str = ""
+    bucket_secret_access_key: str = ""
+    bucket_name: str = ""
+    bucket_region: str = "auto"
+
     @property
     def allowed_origins(self) -> list[str]:
         """Turns the raw FRONTEND_ORIGINS env var into the list shape

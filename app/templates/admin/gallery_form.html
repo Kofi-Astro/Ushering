@@ -8,6 +8,7 @@
 <div class="form-card">
   <form method="post" action="{{ ('/gallery/' ~ item.id ~ '/edit') if item else '/gallery/new' }}" enctype="multipart/form-data" id="gallery-form">
     {% if error %}<p class="error"><i class="fas fa-circle-exclamation"></i> {{ error }}</p>{% endif %}
+    <input type="hidden" id="video_object_key" name="video_object_key" value="">
     <div class="field">
       <label for="label">Caption / Label</label>
       <input type="text" id="label" name="label" value="{{ item.label if item else '' }}" required>
@@ -40,7 +41,12 @@
     <div class="field" id="video-file-field">
       <label for="video_file">Or Upload a Video File</label>
       <input type="file" id="video_file" name="video_file" accept="video/mp4,video/webm,video/ogg,.mov">
-      <p class="hint">MP4, WebM, Ogg or MOV, up to {{ max_video_mb }}MB. If you choose a file here, it's used instead of the URL above.{% if item and item.video_url and not item.video_url.startswith('http') %} A video file is already uploaded for this item — choose a new one to replace it, or leave empty to keep it.{% endif %}</p>
+      {% if bucket_configured %}
+      <p class="hint">MP4, WebM, Ogg or MOV. Uploads straight to storage from your device — a poster image is generated automatically from the video unless you upload your own below.{% if item and item.video_url and not item.video_url.startswith('http') %} A video is already uploaded for this item — choose a new one to replace it, or leave empty to keep it.{% endif %}</p>
+      {% else %}
+      <p class="hint">MP4, WebM, Ogg or MOV, up to {{ max_video_mb }}MB.{% if item and item.video_url and not item.video_url.startswith('http') %} A video file is already uploaded for this item — choose a new one to replace it, or leave empty to keep it.{% endif %}</p>
+      {% endif %}
+      <p class="hint" id="upload-status"></p>
     </div>
     <div class="field" id="hero-field">
       <label class="checkbox-label"><input type="checkbox" id="is_hero" name="is_hero" value="1" {{ 'checked' if item and item.is_hero }}> Feature as hero video on the homepage</label>
@@ -62,12 +68,20 @@
 
 <script>
   (function () {
+    var bucketConfigured = {{ 'true' if bucket_configured else 'false' }};
+    var form = document.getElementById('gallery-form');
     var mediaType = document.getElementById('media_type');
     var videoUrlField = document.getElementById('video-url-field');
     var videoFileField = document.getElementById('video-file-field');
+    var videoFileInput = document.getElementById('video_file');
+    var videoObjectKeyInput = document.getElementById('video_object_key');
     var heroField = document.getElementById('hero-field');
     var photoLabel = document.getElementById('photo-label');
     var photoHint = document.getElementById('photo-hint');
+    var photoInput = document.getElementById('photo');
+    var uploadStatus = document.getElementById('upload-status');
+    var submitBtn = form.querySelector('.btn-primary');
+
     function sync() {
       var isVideo = mediaType.value === 'video';
       videoUrlField.hidden = !isVideo;
@@ -75,11 +89,114 @@
       heroField.hidden = !isVideo;
       photoLabel.textContent = isVideo ? 'Poster Image (optional)' : ('{{ "Replace Photo" if item and item.image else "Photo" }}');
       photoHint.textContent = isVideo
-        ? 'Only needed for non-YouTube links — YouTube gets a thumbnail automatically, but Vimeo/Facebook/Instagram/TikTok don\'t, so those show a generic icon without one.'
+        ? 'Only needed for a link without an automatic thumbnail (everything except YouTube, and an uploaded video file, which both get one automatically) — otherwise shows a generic icon.'
         : 'JPG, PNG, WebP or GIF. Leave empty to keep the current photo.';
     }
     mediaType.addEventListener('change', sync);
     sync();
+
+    /* Draws a frame from partway through the video onto a canvas and
+       resolves a JPEG Blob, entirely client-side (no server round trip) —
+       used as an automatic poster image when the admin hasn't uploaded
+       their own. Resolves null (not rejects) on any failure, since a
+       missing auto-poster is a minor cosmetic gap, not worth blocking
+       the save over. */
+    function captureVideoFrame(file) {
+      return new Promise(function (resolve) {
+        var videoEl = document.createElement('video');
+        videoEl.preload = 'metadata';
+        videoEl.muted = true;
+        videoEl.playsInline = true;
+        var objectUrl = URL.createObjectURL(file);
+        var settled = false;
+        function finish(blob) {
+          if (settled) return;
+          settled = true;
+          URL.revokeObjectURL(objectUrl);
+          resolve(blob);
+        }
+        videoEl.addEventListener('loadedmetadata', function () {
+          videoEl.currentTime = Math.min(1, (videoEl.duration || 2) / 2);
+        });
+        videoEl.addEventListener('seeked', function () {
+          try {
+            var canvas = document.createElement('canvas');
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(finish, 'image/jpeg', 0.85);
+          } catch (e) {
+            finish(null);
+          }
+        });
+        videoEl.addEventListener('error', function () { finish(null); });
+        setTimeout(function () { finish(null); }, 8000);
+        videoEl.src = objectUrl;
+      });
+    }
+
+    /* Asks the server for a presigned upload URL (404s if no bucket is
+       configured — see app/admin/routers/gallery.py:get_video_upload_url)
+       and PUTs the file straight there via XHR (for upload progress —
+       fetch() doesn't expose that), never through this app's own form
+       submission. Resolves the bucket object key on success. */
+    function uploadDirect(file) {
+      var url = '/gallery/video-upload-url?filename=' + encodeURIComponent(file.name) +
+        '&content_type=' + encodeURIComponent(file.type || 'video/mp4');
+      return fetch(url).then(function (res) {
+        if (!res.ok) throw new Error('no bucket configured');
+        return res.json();
+      }).then(function (data) {
+        return new Promise(function (resolve, reject) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('PUT', data.upload_url);
+          xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+          xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) {
+              uploadStatus.textContent = 'Uploading video… ' + Math.round((e.loaded / e.total) * 100) + '%';
+            }
+          });
+          xhr.addEventListener('load', function () {
+            if (xhr.status >= 200 && xhr.status < 300) resolve(data.key);
+            else reject(new Error('upload failed with status ' + xhr.status));
+          });
+          xhr.addEventListener('error', function () { reject(new Error('upload failed')); });
+          xhr.send(file);
+        });
+      });
+    }
+
+    form.addEventListener('submit', function (e) {
+      if (mediaType.value !== 'video' || !videoFileInput.files.length || !bucketConfigured) {
+        return; // plain submit — no video file chosen, not a video row, or no bucket to upload to
+      }
+      e.preventDefault();
+      submitBtn.disabled = true;
+      uploadStatus.textContent = 'Uploading video…';
+
+      var file = videoFileInput.files[0];
+      var posterPromise = photoInput.files.length ? Promise.resolve(null) : captureVideoFrame(file);
+
+      Promise.all([uploadDirect(file), posterPromise]).then(function (results) {
+        videoObjectKeyInput.value = results[0];
+        videoFileInput.value = ''; // already uploaded directly — don't also send it through the form
+        var posterBlob = results[1];
+        if (posterBlob) {
+          var dataTransfer = new DataTransfer();
+          dataTransfer.items.add(new File([posterBlob], 'poster.jpg', { type: 'image/jpeg' }));
+          photoInput.files = dataTransfer.files;
+        }
+        uploadStatus.textContent = 'Saving…';
+        form.submit();
+      }).catch(function () {
+        // Direct upload failed (or no bucket) — fall back to a plain
+        // submit, sending video_file through the form the old way (see
+        // _save_video_upload), still capped at max_video_mb there.
+        uploadStatus.textContent = '';
+        submitBtn.disabled = false;
+        form.submit();
+      });
+    });
   })();
 </script>
 {% endblock %}

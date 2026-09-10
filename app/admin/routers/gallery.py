@@ -10,14 +10,23 @@ container filesystem is otherwise ephemeral and a plain upload would
 silently vanish on the very next deploy (this happened once, before the
 volume existed — see the git history around when it was added).
 
-Videos can be either a link (YouTube, Vimeo, Facebook, Instagram, TikTok,
-or a direct video file hosted elsewhere — see app/content.py's
-_analyze_video_url) or an uploaded video file, saved the same way photos
-are (see _save_video_upload) now that the volume makes that safe. A
-direct upload is capped at MAX_VIDEO_UPLOAD_BYTES — video files are much
-larger than photos, and the volume, while persistent, isn't unlimited.
-The `photo` field is still accepted for a video row either way, reused as
-an optional poster/thumbnail image rather than the video itself.
+Videos can be a link (YouTube, Vimeo, Facebook, Instagram, TikTok, or a
+direct video file hosted elsewhere — see app/content.py's
+_analyze_video_url) or an uploaded video file. An uploaded video goes
+straight to the Railway Bucket (see app/storage.py) via a presigned
+direct browser-to-bucket upload — gallery_form.html's JS asks this
+router for a presigned URL (see get_video_upload_url below) and PUTs the
+file there itself, so the video's bytes never pass through this app's
+own request handling at all. That's deliberate: routing a large video
+through this app server — even just to write it to the volume — was
+tripping some upstream size/rate protection the business owner ran into
+("too big" / "overload-protect" errors). If no bucket is configured
+(bucket_configured() is False — e.g. local dev), the form's JS falls
+back to _save_video_upload below instead, which writes to the same
+local-disk volume photos use, capped at MAX_VIDEO_UPLOAD_BYTES since
+that path doesn't have a bucket's effectively unlimited storage. The
+`photo` field is accepted for a video row either way, reused as an
+optional poster/thumbnail image rather than the video itself.
 """
 
 import urllib.request
@@ -25,11 +34,12 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from ... import storage
 from ...content import _analyze_video_url
 from ...database import get_db
 from ...models import GalleryItem
@@ -134,27 +144,50 @@ def _save_video_upload(file: UploadFile | None) -> tuple[str | None, str | None]
     return f"/images/uploads/videos/{filename}", None
 
 
+@router.get("/video-upload-url")
+def get_video_upload_url(filename: str, content_type: str = "video/mp4"):
+    """Returns a presigned URL the admin's browser PUTs a video file to
+    directly (see app/storage.py) — called by gallery_form.html's JS
+    before the rest of the form submits. 404s if no bucket is configured
+    (app/storage.py:bucket_configured), so the form's JS knows to fall
+    back to submitting the file through the form itself instead (see
+    _save_video_upload)."""
+    if not storage.bucket_configured():
+        raise HTTPException(status_code=404, detail="No bucket configured")
+    key = storage.new_video_key(filename)
+    return {"upload_url": storage.generate_upload_url(key, content_type), "key": key}
+
+
 def _resolve_video_source(
-    media_type: str, video_url: str, video_file: UploadFile | None, keep_existing: str | None
+    media_type: str,
+    video_url: str,
+    video_file: UploadFile | None,
+    video_object_key: str,
+    keep_existing: str | None,
 ) -> tuple[str | None, str | None]:
     """Decides what to actually store in GalleryItem.video_url from the
-    three ways a video row's source can come in, in priority order:
-    1. An uploaded file, if one was chosen — takes priority since
-       choosing a new file is the most deliberate possible action.
-    2. The Video URL text field, if non-empty (resolving any TikTok short
+    four ways a video row's source can come in, in priority order:
+    1. `video_object_key` — set by gallery_form.html's JS after it
+       finished a direct browser-to-bucket upload (see
+       get_video_upload_url above). Stored with storage.KEY_PREFIX so
+       app/content.py's _analyze_video_url can recognize it later.
+    2. An uploaded file the OLD way, if one was chosen — only reached
+       when no bucket is configured, so the form's JS fell back to
+       letting the file ride along with the rest of the form (see
+       _save_video_upload).
+    3. The Video URL text field, if non-empty (resolving any TikTok short
        link first — see _resolve_short_link).
-    3. `keep_existing` — the item's current video_url, so an edit that
-       touches neither field doesn't wipe it. None on create, since
-       there's nothing to keep yet. (The text field is always pre-filled
-       with the current value on the edit form, so in practice case 2
-       already covers "unchanged" — this is a defensive fallback in case
-       it's ever missing, e.g. a future template change.)
+    4. `keep_existing` — the item's current video_url, so an edit that
+       touches none of the above doesn't wipe it. None on create, since
+       there's nothing to keep yet.
     Returns (video_url, error) — exactly one is set; an error means the
     upload failed validation and the caller should re-render the form
     with it rather than saving.
     """
     if media_type != "video":
         return None, None
+    if video_object_key.strip():
+        return f"{storage.KEY_PREFIX}{video_object_key.strip()}", None
     if video_file is not None and video_file.filename:
         path, error = _save_video_upload(video_file)
         if error:
@@ -163,6 +196,16 @@ def _resolve_video_source(
     if video_url.strip():
         return _resolve_short_link(video_url.strip()), None
     return keep_existing, None
+
+
+def _delete_if_bucket_video(video_url: str | None) -> None:
+    """Cleans up the bucket object behind a video_url, if it is one (see
+    storage.KEY_PREFIX) — called whenever a GalleryItem's video is
+    deleted or replaced, so bucket storage doesn't silently accumulate
+    orphaned files the local-disk uploads already do (see
+    delete_gallery_item's docstring for why that one's left as-is)."""
+    if video_url and video_url.startswith(storage.KEY_PREFIX):
+        storage.delete_video(video_url[len(storage.KEY_PREFIX):])
 
 
 @router.get("")
@@ -204,6 +247,7 @@ def new_gallery_form(request: Request):
             "categories": CATEGORIES,
             "media_types": MEDIA_TYPES,
             "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+            "bucket_configured": storage.bucket_configured(),
         },
     )
 
@@ -216,6 +260,7 @@ def create_gallery_item(
     order: int = Form(1),
     media_type: str = Form("image"),
     video_url: str = Form(""),
+    video_object_key: str = Form(""),
     is_hero: str | None = Form(None),
     photo: UploadFile | None = None,
     video_file: UploadFile | None = None,
@@ -224,11 +269,13 @@ def create_gallery_item(
     """Handles the add form submit. `photo` is optional either way —
     for an image row it's the photo itself (placeholder icon until
     uploaded); for a video row it's an optional poster. The video itself
-    comes from either `video_url` or `video_file` — see
+    comes from `video_object_key`, `video_file` or `video_url` — see
     _resolve_video_source for the priority between them."""
     if media_type not in MEDIA_TYPES:
         media_type = "image"
-    resolved_video_url, error = _resolve_video_source(media_type, video_url, video_file, keep_existing=None)
+    resolved_video_url, error = _resolve_video_source(
+        media_type, video_url, video_file, video_object_key, keep_existing=None
+    )
     if error:
         return templates.TemplateResponse(
             request,
@@ -240,6 +287,7 @@ def create_gallery_item(
                 "categories": CATEGORIES,
                 "media_types": MEDIA_TYPES,
                 "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+                "bucket_configured": storage.bucket_configured(),
                 "error": error,
             },
             status_code=422,
@@ -275,6 +323,7 @@ def edit_gallery_form(item_id: int, request: Request, db: Session = Depends(get_
             "categories": CATEGORIES,
             "media_types": MEDIA_TYPES,
             "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+            "bucket_configured": storage.bucket_configured(),
         },
     )
 
@@ -288,6 +337,7 @@ def update_gallery_item(
     order: int = Form(1),
     media_type: str = Form("image"),
     video_url: str = Form(""),
+    video_object_key: str = Form(""),
     is_hero: str | None = Form(None),
     photo: UploadFile | None = None,
     video_file: UploadFile | None = None,
@@ -296,16 +346,20 @@ def update_gallery_item(
     """Handles the edit form's submit. Uploading a new photo/poster
     replaces the old one; leaving the file field empty keeps whatever's
     already stored, since _save_upload returns None when nothing was
-    chosen. The video itself comes from either `video_url` or
-    `video_file` — see _resolve_video_source for the priority between
-    them, including how an edit that touches neither keeps the current
-    video_url rather than wiping it."""
+    chosen. The video itself comes from `video_object_key`, `video_file`
+    or `video_url` — see _resolve_video_source for the priority between
+    them, including how an edit that touches none of them keeps the
+    current video_url rather than wiping it. If the video is actually
+    changing and the old one lived in the bucket, it's deleted there too
+    (see _delete_if_bucket_video) rather than left orphaned."""
     if media_type not in MEDIA_TYPES:
         media_type = "image"
     item = db.query(GalleryItem).filter(GalleryItem.id == item_id).first()
     if not item:
         return RedirectResponse(url="/gallery", status_code=303)
-    resolved_video_url, error = _resolve_video_source(media_type, video_url, video_file, keep_existing=item.video_url)
+    resolved_video_url, error = _resolve_video_source(
+        media_type, video_url, video_file, video_object_key, keep_existing=item.video_url
+    )
     if error:
         return templates.TemplateResponse(
             request,
@@ -317,10 +371,13 @@ def update_gallery_item(
                 "categories": CATEGORIES,
                 "media_types": MEDIA_TYPES,
                 "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+                "bucket_configured": storage.bucket_configured(),
                 "error": error,
             },
             status_code=422,
         )
+    if resolved_video_url != item.video_url:
+        _delete_if_bucket_video(item.video_url)
     item.label = label
     item.category = category
     item.order = order
@@ -336,12 +393,15 @@ def update_gallery_item(
 
 @router.post("/{item_id}/delete")
 def delete_gallery_item(item_id: int, db: Session = Depends(get_db)):
-    """Removes the database row. Note: this does NOT delete the uploaded
-    file itself from images/uploads/ — it's simply left orphaned on disk.
-    Fine at this scale; worth cleaning up if storage ever becomes a
-    concern."""
+    """Removes the database row. Note: this does NOT delete an uploaded
+    photo/local-disk video file itself from images/uploads/ — it's simply
+    left orphaned on disk, fine at this scale. A bucket-stored video (see
+    _delete_if_bucket_video) is deleted for real, though — unlike the
+    volume's fixed allocation, bucket storage has a real ongoing cost per
+    GB kept around."""
     item = db.query(GalleryItem).filter(GalleryItem.id == item_id).first()
     if item:
+        _delete_if_bucket_video(item.video_url)
         db.delete(item)
         db.commit()
     return RedirectResponse(url="/gallery", status_code=303)
