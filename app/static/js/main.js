@@ -307,4 +307,28 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.current-year').forEach((el) => {
     el.textContent = new Date().getFullYear();
   });
+
+  /* Team photo carousel (see app/models.py:TeamPhoto and templates/
+     pages/index.html + about.html) — a plain crossfade between
+     .carousel-slide elements, auto-advancing every 5s and also
+     click-to-jump via the .carousel-dot buttons. Each .photo-carousel on
+     the page runs independently. Does nothing when there's only one
+     photo (or none) — the single <img>/placeholder just sits there. */
+  document.querySelectorAll('.photo-carousel').forEach((carousel) => {
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const dots = carousel.querySelectorAll('.carousel-dot');
+    if (slides.length < 2) return;
+    let current = 0;
+    const show = (index) => {
+      slides[current].classList.remove('active');
+      if (dots[current]) dots[current].classList.remove('active');
+      current = index;
+      slides[current].classList.add('active');
+      if (dots[current]) dots[current].classList.add('active');
+    };
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => show(index));
+    });
+    setInterval(() => show((current + 1) % slides.length), 5000);
+  });
 });

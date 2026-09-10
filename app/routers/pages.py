@@ -127,26 +127,10 @@ def home(request: Request):
             services=content.get_services()[:6],
             gallery_items=content.get_gallery_items()[:3],
             testimonials=content.get_testimonials()[:3],
-            featured_photo=_featured_photos_for_home_and_about()[0],
+            team_photos=content.get_team_photos(),
             **_hero_video_context(),
         ),
     )
-
-
-def _featured_photos_for_home_and_about() -> list[dict | None]:
-    """The first two real uploaded gallery photos, for the Home and About
-    pages' "team photo" spot (see content.get_featured_photos) — always
-    exactly 2 items, padded with None so callers can safely index [0]/[1]
-    without a length check. If only one real photo exists, both pages
-    show that same one rather than either falling back to the "to be
-    added" placeholder unnecessarily; if none exist yet, both are None
-    and the placeholder shows on both, exactly as before this existed."""
-    photos = content.get_featured_photos(2)
-    if not photos:
-        return [None, None]
-    if len(photos) == 1:
-        return [photos[0], photos[0]]
-    return photos
 
 
 @router.get("/about.html")
@@ -162,7 +146,7 @@ def about(request: Request):
             title="About Us | GPS Ushering and Events — Professional Ushers in Ghana",
             description="Learn about GPS Ushering and Events — a Ghana-based team of professional, trained ushers delivering elegant guest coordination and hospitality for weddings, corporate events and more.",
             keywords="ushering company Ghana, professional ushers in Accra, event ushers Ghana, trained ushers Ghana, event support team Accra, ushering services in Ghana, event staffing agency Ghana",
-            featured_photo=_featured_photos_for_home_and_about()[1],
+            team_photos=content.get_team_photos(),
         ),
     )
 

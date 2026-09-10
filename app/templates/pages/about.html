@@ -11,13 +11,25 @@
 <section>
   <div class="container split">
     <div class="split-media">
-      <!-- featured_photo (see app/routers/pages.py:_featured_photos_for_home_and_about)
-           is a real uploaded Gallery photo, if any — falls back to the
-           placeholder note below only until the business owner has
-           uploaded at least one real photo. -->
+      <!-- team_photos (see app/models.py:TeamPhoto, managed at
+           admin /team-photos) is an explicitly-curated set of photos —
+           falls back to the placeholder note below until the business
+           owner has added at least one. Two or more auto-rotate as a
+           crossfade carousel (see static/js/main.js). -->
       <div class="media-frame">
-        {% if featured_photo %}
-        <img src="{{ featured_photo.image }}" alt="{{ featured_photo.label }}">
+        {% if team_photos %}
+        <div class="photo-carousel">
+          {% for photo in team_photos %}
+          <img src="{{ photo.image }}" alt="{{ photo.caption or 'Our ushering team' }}" class="carousel-slide{{ ' active' if loop.first }}">
+          {% endfor %}
+          {% if team_photos|length > 1 %}
+          <div class="carousel-dots">
+            {% for photo in team_photos %}
+            <button type="button" class="carousel-dot{{ ' active' if loop.first }}" aria-label="Show photo {{ loop.index }}"></button>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
         {% else %}
         <i class="fas fa-images"></i><span class="frame-note">{{ site_text['about.media_note'] }}</span>
         {% endif %}

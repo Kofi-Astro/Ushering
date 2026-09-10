@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Team Photos</h2>
+  <a href="/team-photos/new" class="btn-primary"><i class="fas fa-plus"></i> Add Photo</a>
+</div>
+<p class="empty" style="padding: 0 0 20px;">Shown as a carousel in the "Who We Are" section on the Home page and "Our Story" section on the About page. Add as many as you like — with two or more, they rotate automatically.</p>
+
+{% if items|length == 0 %}
+<p class="empty">No team photos yet — both pages show the original placeholder note until you add one.</p>
+{% endif %}
+
+<div class="item-list">
+  {% for item in items %}
+  <div class="item-row">
+    <img class="item-thumb" src="{{ item.image }}" alt="{{ item.caption or 'Team photo' }}">
+    <div class="item-body">
+      <div class="item-title">{{ item.caption or "(no caption)" }}</div>
+    </div>
+    <span class="order-badge">#{{ item.order }}</span>
+    <div class="item-actions">
+      <a href="/team-photos/{{ item.id }}/edit" class="btn-secondary">Edit</a>
+      <form method="post" action="/team-photos/{{ item.id }}/delete" onsubmit="return confirm('Delete this photo?');">
+        <button type="submit" class="btn-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

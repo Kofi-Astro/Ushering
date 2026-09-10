@@ -3,20 +3,20 @@ table, same list/new/create/edit/delete shape as services.py, plus real
 file-upload handling for the photo itself (the one content type that
 involves a binary upload rather than just text fields).
 
-NOTE (see docs/technical-overview.html's deployment callout): uploaded
-files are saved to local disk under images/uploads/. That's fine for
-local dev, but Railway's default filesystem is ephemeral — a redeploy can
-wipe it. Attach a Railway volume mounted at images/uploads/, or move this
-to object storage (e.g. Cloudflare R2), before relying on this in
-production.
+Uploaded files are saved to local disk under images/uploads/, which is
+backed by a persistent Railway volume (mounted at /app/images/uploads —
+see .railway/railway.py) specifically so this survives redeploys; Railway's
+container filesystem is otherwise ephemeral and a plain upload would
+silently vanish on the very next deploy (this happened once, before the
+volume existed — see the git history around when it was added).
 
-Videos are handled differently: by URL only (YouTube, Vimeo, Facebook,
-Instagram, TikTok, or a direct video file hosted elsewhere), never by
-uploading a video file through this form. Video files are typically far
-larger than photos, and the same ephemeral-disk caveat above would turn
-into a much bigger problem — filling the disk fast and losing the
-"upload" on the next redeploy. The
-`photo` file field is still accepted for a video row, but it's reused as
+Videos can be either a link (YouTube, Vimeo, Facebook, Instagram, TikTok,
+or a direct video file hosted elsewhere — see app/content.py's
+_analyze_video_url) or an uploaded video file, saved the same way photos
+are (see _save_video_upload) now that the volume makes that safe. A
+direct upload is capped at MAX_VIDEO_UPLOAD_BYTES — video files are much
+larger than photos, and the volume, while persistent, isn't unlimited.
+The `photo` field is still accepted for a video row either way, reused as
 an optional poster/thumbnail image rather than the video itself.
 """
 
@@ -41,7 +41,10 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / 
 # Repo root's images/uploads/ — four .parent calls from this file
 # (routers/ -> admin/ -> app/ -> repo root), then down into images/uploads.
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent.parent / "images" / "uploads"
+VIDEO_UPLOAD_DIR = UPLOAD_DIR / "videos"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".webm", ".ogg", ".mov"}
+MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024  # 100MB
 CATEGORIES = ["weddings", "corporate", "funerals", "conferences", "parties"]
 MEDIA_TYPES = ["image", "video"]
 
@@ -92,6 +95,74 @@ def _save_upload(file: UploadFile | None) -> str | None:
     return f"/images/uploads/{filename}"
 
 
+def _save_video_upload(file: UploadFile | None) -> tuple[str | None, str | None]:
+    """Saves an uploaded video file to disk, same persistent volume as
+    photo uploads (see this module's docstring). Returns (path, error) —
+    exactly one is ever set. Unlike a poster photo, a bad video upload
+    can't just be silently skipped (the video itself is the whole point
+    of the form submission), so a wrong extension or an over-limit file
+    comes back as an error the caller re-renders the form with, rather
+    than quietly saving nothing.
+
+    Streamed to disk in 1MB chunks rather than file.file.read() in one
+    shot, so a 100MB upload doesn't sit fully buffered in memory at once;
+    aborted (and the partial file deleted) the moment it crosses
+    MAX_VIDEO_UPLOAD_BYTES, rather than after writing the whole thing."""
+    if file is None or not file.filename:
+        return None, None
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        allowed = ", ".join(sorted(ALLOWED_VIDEO_EXTENSIONS))
+        return None, f"'{ext}' isn't a supported video format — use one of: {allowed}."
+    VIDEO_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{uuid.uuid4().hex}{ext}"
+    dest = VIDEO_UPLOAD_DIR / filename
+    written = 0
+    try:
+        with open(dest, "wb") as out:
+            while chunk := file.file.read(1024 * 1024):
+                written += len(chunk)
+                if written > MAX_VIDEO_UPLOAD_BYTES:
+                    raise ValueError("video file too large")
+                out.write(chunk)
+    except ValueError:
+        dest.unlink(missing_ok=True)
+        limit_mb = MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024)
+        return None, f"That video is over the {limit_mb}MB limit — trim it, or host it elsewhere and paste the link instead."
+    return f"/images/uploads/videos/{filename}", None
+
+
+def _resolve_video_source(
+    media_type: str, video_url: str, video_file: UploadFile | None, keep_existing: str | None
+) -> tuple[str | None, str | None]:
+    """Decides what to actually store in GalleryItem.video_url from the
+    three ways a video row's source can come in, in priority order:
+    1. An uploaded file, if one was chosen — takes priority since
+       choosing a new file is the most deliberate possible action.
+    2. The Video URL text field, if non-empty (resolving any TikTok short
+       link first — see _resolve_short_link).
+    3. `keep_existing` — the item's current video_url, so an edit that
+       touches neither field doesn't wipe it. None on create, since
+       there's nothing to keep yet. (The text field is always pre-filled
+       with the current value on the edit form, so in practice case 2
+       already covers "unchanged" — this is a defensive fallback in case
+       it's ever missing, e.g. a future template change.)
+    Returns (video_url, error) — exactly one is set; an error means the
+    upload failed validation and the caller should re-render the form
+    with it rather than saving.
+    """
+    if media_type != "video":
+        return None, None
+    if video_file is not None and video_file.filename:
+        path, error = _save_video_upload(video_file)
+        if error:
+            return None, error
+        return path, None
+    if video_url.strip():
+        return _resolve_short_link(video_url.strip()), None
+    return keep_existing, None
+
+
 @router.get("")
 def list_gallery(request: Request, db: Session = Depends(get_db)):
     """The /gallery landing page: every photo tile (or placeholder icon,
@@ -124,12 +195,20 @@ def new_gallery_form(request: Request):
     return templates.TemplateResponse(
         request,
         "admin/gallery_form.html",
-        {"title": "Add Photo or Video", "active": "gallery", "item": None, "categories": CATEGORIES, "media_types": MEDIA_TYPES},
+        {
+            "title": "Add Photo or Video",
+            "active": "gallery",
+            "item": None,
+            "categories": CATEGORIES,
+            "media_types": MEDIA_TYPES,
+            "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+        },
     )
 
 
 @router.post("/new")
 def create_gallery_item(
+    request: Request,
     label: str = Form(...),
     category: str = Form(...),
     order: int = Form(1),
@@ -137,16 +216,33 @@ def create_gallery_item(
     video_url: str = Form(""),
     is_hero: str | None = Form(None),
     photo: UploadFile | None = None,
+    video_file: UploadFile | None = None,
     db: Session = Depends(get_db),
 ):
     """Handles the add form submit. `photo` is optional either way —
     for an image row it's the photo itself (placeholder icon until
-    uploaded); for a video row it's an optional poster (see this file's
-    module docstring for why video itself is URL-only)."""
+    uploaded); for a video row it's an optional poster. The video itself
+    comes from either `video_url` or `video_file` — see
+    _resolve_video_source for the priority between them."""
     if media_type not in MEDIA_TYPES:
         media_type = "image"
+    resolved_video_url, error = _resolve_video_source(media_type, video_url, video_file, keep_existing=None)
+    if error:
+        return templates.TemplateResponse(
+            request,
+            "admin/gallery_form.html",
+            {
+                "title": "Add Photo or Video",
+                "active": "gallery",
+                "item": None,
+                "categories": CATEGORIES,
+                "media_types": MEDIA_TYPES,
+                "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+                "error": error,
+            },
+            status_code=422,
+        )
     image_path = _save_upload(photo) or ""
-    resolved_video_url = _resolve_short_link(video_url.strip()) if media_type == "video" and video_url.strip() else None
     db.add(
         GalleryItem(
             label=label,
@@ -170,13 +266,21 @@ def edit_gallery_form(item_id: int, request: Request, db: Session = Depends(get_
     return templates.TemplateResponse(
         request,
         "admin/gallery_form.html",
-        {"title": "Edit Photo or Video", "active": "gallery", "item": item, "categories": CATEGORIES, "media_types": MEDIA_TYPES},
+        {
+            "title": "Edit Photo or Video",
+            "active": "gallery",
+            "item": item,
+            "categories": CATEGORIES,
+            "media_types": MEDIA_TYPES,
+            "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+        },
     )
 
 
 @router.post("/{item_id}/edit")
 def update_gallery_item(
     item_id: int,
+    request: Request,
     label: str = Form(...),
     category: str = Form(...),
     order: int = Form(1),
@@ -184,28 +288,47 @@ def update_gallery_item(
     video_url: str = Form(""),
     is_hero: str | None = Form(None),
     photo: UploadFile | None = None,
+    video_file: UploadFile | None = None,
     db: Session = Depends(get_db),
 ):
     """Handles the edit form's submit. Uploading a new photo/poster
     replaces the old one; leaving the file field empty keeps whatever's
     already stored, since _save_upload returns None when nothing was
-    chosen."""
+    chosen. The video itself comes from either `video_url` or
+    `video_file` — see _resolve_video_source for the priority between
+    them, including how an edit that touches neither keeps the current
+    video_url rather than wiping it."""
     if media_type not in MEDIA_TYPES:
         media_type = "image"
     item = db.query(GalleryItem).filter(GalleryItem.id == item_id).first()
-    if item:
-        item.label = label
-        item.category = category
-        item.order = order
-        item.media_type = media_type
-        item.video_url = (
-            _resolve_short_link(video_url.strip()) if media_type == "video" and video_url.strip() else None
+    if not item:
+        return RedirectResponse(url="/gallery", status_code=303)
+    resolved_video_url, error = _resolve_video_source(media_type, video_url, video_file, keep_existing=item.video_url)
+    if error:
+        return templates.TemplateResponse(
+            request,
+            "admin/gallery_form.html",
+            {
+                "title": "Edit Photo or Video",
+                "active": "gallery",
+                "item": item,
+                "categories": CATEGORIES,
+                "media_types": MEDIA_TYPES,
+                "max_video_mb": MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024),
+                "error": error,
+            },
+            status_code=422,
         )
-        item.is_hero = bool(is_hero) if media_type == "video" else False
-        new_image = _save_upload(photo)
-        if new_image:
-            item.image = new_image
-        db.commit()
+    item.label = label
+    item.category = category
+    item.order = order
+    item.media_type = media_type
+    item.video_url = resolved_video_url
+    item.is_hero = bool(is_hero) if media_type == "video" else False
+    new_image = _save_upload(photo)
+    if new_image:
+        item.image = new_image
+    db.commit()
     return RedirectResponse(url="/gallery", status_code=303)
 
 

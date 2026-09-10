@@ -205,6 +205,24 @@ class SiteText(Base):
     value: Mapped[str] = mapped_column(Text)
 
 
+class TeamPhoto(Base):
+    """One photo in the "Who We Are" (Home) / "Our Story" (About) photo
+    carousel — a deliberately separate, explicitly-curated set from the
+    event-category GalleryItem table, since a team photo doesn't belong
+    to any wedding/corporate/funeral category the way a gallery item
+    does, and shouldn't be picked automatically from whatever the
+    business owner happens to upload there. Both pages fall back to the
+    original static placeholder note (see app/site_text_catalog.py's
+    home.about.media_note / about.media_note) when this table is empty."""
+
+    __tablename__ = "team_photos"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    image: Mapped[str] = mapped_column(String(300))
+    caption: Mapped[str] = mapped_column(String(200), default="")
+    order: Mapped[int] = mapped_column(Integer, default=1)
+
+
 class AdminAuth(Base):
     """Single-row table (id is always 1) holding whatever's needed for the
     admin password-reset flow — see app/security.py and
