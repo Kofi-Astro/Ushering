@@ -18,6 +18,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from ..asset_version import ASSET_VERSION
 from ..content import get_site_settings
 from ..database import get_db
 from ..email_notify import send_customer_edit_notification
@@ -26,6 +27,7 @@ from .pages import base_context
 
 router = APIRouter(tags=["manage-booking"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 EDITABLE_STATUSES = {BookingStatus.new, BookingStatus.contacted}
 

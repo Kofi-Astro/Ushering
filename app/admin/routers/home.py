@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...models import Booking, BookingStatus, FAQItem, GalleryItem, Service, Testimonial
+from ...asset_version import ASSET_VERSION
 from ...security import require_admin
 
 # `dependencies=[Depends(require_admin)]` at the router level applies the
@@ -20,6 +21,7 @@ from ...security import require_admin
 # other router under app/admin/routers/.
 router = APIRouter(tags=["home"], dependencies=[Depends(require_admin)])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 
 @router.get("/")

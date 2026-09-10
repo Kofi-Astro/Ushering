@@ -16,9 +16,11 @@ from fastapi.responses import PlainTextResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from .. import content
+from ..asset_version import ASSET_VERSION
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 
 def base_context(request: Request, **extra) -> dict:

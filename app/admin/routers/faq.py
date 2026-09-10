@@ -13,10 +13,12 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...models import FAQItem
+from ...asset_version import ASSET_VERSION
 from ...security import require_admin
 
 router = APIRouter(prefix="/faq", tags=["faq-admin"], dependencies=[Depends(require_admin)])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 
 @router.get("")

@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from ...asset_version import ASSET_VERSION
 from ...config import get_settings
 from ...content import get_site_settings
 from ...database import get_db
@@ -26,6 +27,7 @@ from ...security import (
 
 router = APIRouter(tags=["auth"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 settings = get_settings()
 
 

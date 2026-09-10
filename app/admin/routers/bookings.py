@@ -26,10 +26,12 @@ from ...content import get_site_settings
 from ...database import get_db
 from ...email_notify import send_booking_status_update
 from ...models import Booking, BookingStatus
+from ...asset_version import ASSET_VERSION
 from ...security import require_admin
 
 router = APIRouter(prefix="/bookings", tags=["bookings-admin"], dependencies=[Depends(require_admin)])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 
 @router.get("")

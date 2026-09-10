@@ -16,10 +16,12 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...models import TeamPhoto
+from ...asset_version import ASSET_VERSION
 from ...security import require_admin
 
 router = APIRouter(prefix="/team-photos", tags=["team-photos-admin"], dependencies=[Depends(require_admin)])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 # Same physical directory (and Railway volume) as Gallery's photo uploads
 # — see app/admin/routers/gallery.py's UPLOAD_DIR comment.

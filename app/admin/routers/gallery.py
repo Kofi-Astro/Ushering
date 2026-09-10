@@ -33,10 +33,12 @@ from sqlalchemy.orm import Session
 from ...content import _analyze_video_url
 from ...database import get_db
 from ...models import GalleryItem
+from ...asset_version import ASSET_VERSION
 from ...security import require_admin
 
 router = APIRouter(prefix="/gallery", tags=["gallery-admin"], dependencies=[Depends(require_admin)])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent.parent / "templates"))
+templates.env.globals["asset_version"] = ASSET_VERSION
 
 # Repo root's images/uploads/ — four .parent calls from this file
 # (routers/ -> admin/ -> app/ -> repo root), then down into images/uploads.
