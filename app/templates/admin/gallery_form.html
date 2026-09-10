@@ -50,7 +50,7 @@
     </div>
     <div class="field" id="hero-field">
       <label class="checkbox-label"><input type="checkbox" id="is_hero" name="is_hero" value="1" {{ 'checked' if item and item.is_hero }}> Feature as hero video on the homepage</label>
-      <p class="hint">You can mark more than one. Direct video file links cycle through the background one after another (in Display Order); YouTube, Vimeo, Facebook and TikTok share a single "Watch Our Videos" button with Prev/Next controls. Instagram links aren't included here (see the Video URL hint above) — they still show in the main Gallery page.</p>
+      <p class="hint">You can mark as many as you like. Direct video file links cycle through the background in a random order that reshuffles on every visit (up to 6 at a time); YouTube, Vimeo, Facebook and TikTok share a single "Watch Our Videos" button with Prev/Next controls, also shuffled and capped at 6. Instagram links aren't included here (see the Video URL hint above) — they still show in the main Gallery page.</p>
     </div>
     <div class="field" id="photo-field">
       {% if item and item.image %}

@@ -9,6 +9,7 @@ the entire separate, password-protected admin panel.
 """
 
 import json
+import random
 from pathlib import Path
 
 from fastapi import APIRouter, Request
@@ -21,6 +22,13 @@ from ..asset_version import ASSET_VERSION
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 templates.env.globals["asset_version"] = ASSET_VERSION
+
+# With a business owner marking most/all of their gallery videos as
+# "hero" (see _hero_video_context below), showing every single one in a
+# fixed order on every page load gets long and repetitive fast — capping
+# and shuffling keeps the homepage feeling fresh across visits instead of
+# always opening with the same handful in the same sequence.
+MAX_HERO_VIDEOS_PER_TYPE = 6
 
 
 def base_context(request: Request, **extra) -> dict:
@@ -62,10 +70,21 @@ def _hero_video_context() -> dict:
     one-button-per-video very quickly clutters the hero into a wall of
     buttons labeled with whatever caption the video happened to have.
     hero_embed_playlist_json carries the full set so the lightbox can still
-    step through all of them via its own Prev/Next controls once opened."""
+    step through all of them via its own Prev/Next controls once opened.
+
+    Each list is shuffled and capped at MAX_HERO_VIDEOS_PER_TYPE — with
+    most/all gallery videos marked hero, a fixed `order`-sorted sequence
+    would mean every visit opens with the exact same handful in the exact
+    same sequence; a fresh random pick each page load keeps it feeling
+    alive instead. This runs on every request rather than being cached
+    anywhere, matching how nothing else in this module is cached either."""
     hero_videos = content.get_hero_videos()
     direct_videos = [v for v in hero_videos if v["direct_src"]]
     embed_videos = [v for v in hero_videos if v["embed_url"]]
+    random.shuffle(direct_videos)
+    random.shuffle(embed_videos)
+    direct_videos = direct_videos[:MAX_HERO_VIDEOS_PER_TYPE]
+    embed_videos = embed_videos[:MAX_HERO_VIDEOS_PER_TYPE]
     return {
         "hero_direct_videos": direct_videos,
         "hero_embed_videos": embed_videos,
