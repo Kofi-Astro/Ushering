@@ -20,16 +20,19 @@
         {% if team_photos %}
         <div class="photo-carousel">
           {% for photo in team_photos %}
-          <img src="{{ photo.image }}" alt="{{ photo.caption or 'Our ushering team' }}" class="carousel-slide{{ ' active' if loop.first }}">
-          {% endfor %}
-          {% if team_photos|length > 1 %}
-          <div class="carousel-dots">
-            {% for photo in team_photos %}
-            <button type="button" class="carousel-dot{{ ' active' if loop.first }}" aria-label="Show photo {{ loop.index }}"></button>
-            {% endfor %}
+          <div class="carousel-slide">
+            <img src="{{ photo.image }}" alt="{{ photo.caption or 'Our ushering team' }}">
+            {% if photo.caption %}<span class="carousel-caption">{{ photo.caption }}</span>{% endif %}
           </div>
-          {% endif %}
+          {% endfor %}
         </div>
+        {% if team_photos|length > 1 %}
+        <div class="carousel-dots">
+          {% for photo in team_photos %}
+          <button type="button" class="carousel-dot{{ ' active' if loop.first }}" aria-label="Show photo {{ loop.index }}"></button>
+          {% endfor %}
+        </div>
+        {% endif %}
         {% else %}
         <i class="fas fa-images"></i><span class="frame-note">{{ site_text['about.media_note'] }}</span>
         {% endif %}

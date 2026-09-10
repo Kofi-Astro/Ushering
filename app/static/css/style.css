@@ -417,9 +417,11 @@ section { padding: 90px 0; }
 }
 .split-media {
   position: relative;
+  width: 100%;
+  min-width: 0;
 }
 .media-frame {
-  aspect-ratio: 4/5;
+  aspect-ratio: 4/3;
   border-radius: var(--radius);
   background: linear-gradient(160deg, var(--c-navy), var(--c-wine), var(--c-black));
   display: flex;
@@ -436,20 +438,44 @@ section { padding: 90px 0; }
   height: 100%;
   object-fit: cover;
 }
-/* Team photo carousel (see app/models.py:TeamPhoto) — a plain crossfade:
-   every slide is stacked via position:absolute and only .active is
-   visible, cycled by static/js/main.js. */
-.photo-carousel { position: relative; width: 100%; height: 100%; }
+/* Team photo carousel (see app/models.py:TeamPhoto) — a real horizontal
+   scroller (scroll-snap, one full-width slide at a time) rather than a
+   crossfade, so it's swipeable by touch on its own instead of only
+   reacting to the dots/auto-advance — static/js/main.js just scrolls it
+   programmatically for the dots and the auto-advance timer, it doesn't
+   own the motion the way the old opacity-crossfade version did. */
+.photo-carousel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.photo-carousel::-webkit-scrollbar { display: none; }
 .photo-carousel .carousel-slide {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+}
+.photo-carousel .carousel-slide img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.8s ease;
+  display: block;
 }
-.photo-carousel .carousel-slide.active { opacity: 1; }
+.carousel-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 14px 18px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  color: var(--c-white);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
 .carousel-dots {
   position: absolute;
   bottom: 16px;
