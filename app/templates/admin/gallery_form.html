@@ -89,7 +89,7 @@
       heroField.hidden = !isVideo;
       photoLabel.textContent = isVideo ? 'Poster Image (optional)' : ('{{ "Replace Photo" if item and item.image else "Photo" }}');
       photoHint.textContent = isVideo
-        ? 'Only needed for a link without an automatic thumbnail (everything except YouTube, and an uploaded video file, which both get one automatically) — otherwise shows a generic icon.'
+        ? 'Usually not needed — YouTube, Vimeo, Facebook, Instagram and TikTok links, and an uploaded video file, all get a thumbnail automatically. Upload one here only to override it, or for a link none of those cover.'
         : 'JPG, PNG, WebP or GIF. Leave empty to keep the current photo.';
     }
     mediaType.addEventListener('change', sync);

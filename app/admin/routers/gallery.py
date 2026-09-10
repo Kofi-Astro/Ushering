@@ -26,13 +26,21 @@ back to _save_video_upload below instead, which writes to the same
 local-disk volume photos use, capped at MAX_VIDEO_UPLOAD_BYTES since
 that path doesn't have a bucket's effectively unlimited storage. The
 `photo` field is accepted for a video row either way, reused as an
-optional poster/thumbnail image rather than the video itself.
+optional poster/thumbnail image rather than the video itself — and if
+it's left empty, one is fetched automatically for a link-based video
+(see _fetch_remote_poster) via each platform's own public oEmbed
+endpoint (Vimeo, TikTok) or its Open Graph preview image (Facebook,
+Instagram); only a genuinely unrecognized link falls back to the plain
+icon with no poster at all.
 """
 
+import json
+import re
 import urllib.request
 import uuid
+from html import unescape
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
@@ -40,7 +48,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from ... import storage
-from ...content import _analyze_video_url
+from ...content import _analyze_video_url, _FACEBOOK_VIDEO_RE, _INSTAGRAM_RE, _TIKTOK_RE, _VIMEO_RE
 from ...database import get_db
 from ...models import GalleryItem
 from ...asset_version import ASSET_VERSION
@@ -142,6 +150,99 @@ def _save_video_upload(file: UploadFile | None) -> tuple[str | None, str | None]
         limit_mb = MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024)
         return None, f"That video is over the {limit_mb}MB limit — trim it, or host it elsewhere and paste the link instead."
     return f"/images/uploads/videos/{filename}", None
+
+
+# Meta's own documented crawler UA — the one Facebook/Messenger/WhatsApp
+# themselves send when generating a link-preview card for a shared URL.
+# Sending it here isn't circumventing anything: it's the exact, sanctioned
+# way to ask Facebook/Instagram for a page's preview image, which is all
+# _og_image below does. A generic browser UA gets a stripped-down,
+# tag-free response from both (confirmed directly) — this one doesn't.
+_CRAWLER_USER_AGENT = "facebookexternalhit/1.1"
+_OG_IMAGE_RE = re.compile(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']')
+
+
+def _oembed_thumbnail(oembed_url: str) -> str | None:
+    """Vimeo and TikTok both expose a public, no-auth-required oEmbed
+    endpoint that includes a real thumbnail_url — unlike Facebook and
+    Instagram, neither requires a developer app/access token for this."""
+    try:
+        request = urllib.request.Request(oembed_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(request, timeout=6) as response:
+            data = json.loads(response.read().decode("utf-8", errors="replace"))
+        return data.get("thumbnail_url") or None
+    except Exception:
+        return None
+
+
+def _og_image(page_url: str) -> str | None:
+    """Scrapes the Open Graph image tag off a Facebook/Instagram post's
+    own page — neither offers a public oEmbed endpoint (both now require
+    a Meta developer app), but both still render an og:image tag for
+    link-preview purposes, given the right (see _CRAWLER_USER_AGENT)
+    User-Agent. Reads at most 300KB rather than the whole page — the tag
+    is always in the <head>, and these pages can run into the megabytes."""
+    try:
+        request = urllib.request.Request(page_url, headers={"User-Agent": _CRAWLER_USER_AGENT})
+        with urllib.request.urlopen(request, timeout=6) as response:
+            html = response.read(300_000).decode("utf-8", errors="replace")
+        match = _OG_IMAGE_RE.search(html)
+        return unescape(match.group(1)) if match else None
+    except Exception:
+        return None
+
+
+def _download_image(image_url: str) -> tuple[bytes | None, str]:
+    """Downloads a poster image found by one of the functions above.
+    Capped at 10MB (thumbnails are never anywhere near that) so a
+    misbehaving response can't tie up the request indefinitely."""
+    try:
+        request = urllib.request.Request(image_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(request, timeout=8) as response:
+            content_type = response.headers.get("Content-Type", "")
+            data = response.read(10 * 1024 * 1024)
+        ext = ".jpg"
+        if "png" in content_type:
+            ext = ".png"
+        elif "webp" in content_type:
+            ext = ".webp"
+        elif "gif" in content_type:
+            ext = ".gif"
+        return data, ext
+    except Exception:
+        return None, ".jpg"
+
+
+def _fetch_remote_poster(video_url: str) -> str | None:
+    """Best-effort automatic poster for a video added by link rather than
+    upload. YouTube already gets a real thumbnail for free (a predictable
+    URL — see app/content.py's _analyze_video_url), no request needed;
+    this covers the other four platforms, each saved to disk the same way
+    a manually-uploaded poster would be (rather than storing the remote
+    URL directly, which the platform could later move or delete).
+
+    Only ever called at save time (see create/update_gallery_item below),
+    never from the read path — this can make a real network call, and
+    app/content.py's read functions are deliberately network-free. Never
+    raises; on any failure this returns None and the item just falls back
+    to the generic icon, exactly like before this existed."""
+    thumbnail_url = None
+    if _VIMEO_RE.search(video_url):
+        thumbnail_url = _oembed_thumbnail(f"https://vimeo.com/api/oembed.json?url={quote(video_url, safe='')}")
+    elif _TIKTOK_RE.search(video_url):
+        thumbnail_url = _oembed_thumbnail(f"https://www.tiktok.com/oembed?url={quote(video_url, safe='')}")
+    elif _INSTAGRAM_RE.search(video_url) or _FACEBOOK_VIDEO_RE.search(video_url):
+        thumbnail_url = _og_image(video_url)
+    if not thumbnail_url:
+        return None
+    data, ext = _download_image(thumbnail_url)
+    if not data:
+        return None
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{uuid.uuid4().hex}{ext}"
+    with open(UPLOAD_DIR / filename, "wb") as out:
+        out.write(data)
+    return f"/images/uploads/{filename}"
 
 
 @router.get("/video-upload-url")
@@ -293,6 +394,8 @@ def create_gallery_item(
             status_code=422,
         )
     image_path = _save_upload(photo) or ""
+    if media_type == "video" and not image_path and resolved_video_url:
+        image_path = _fetch_remote_poster(resolved_video_url) or ""
     db.add(
         GalleryItem(
             label=label,
@@ -387,6 +490,13 @@ def update_gallery_item(
     new_image = _save_upload(photo)
     if new_image:
         item.image = new_image
+    elif media_type == "video" and not item.image and resolved_video_url:
+        # Only fills a genuinely missing poster — never overwrites one
+        # that's already there, whether it was uploaded manually or by
+        # this same auto-fetch on an earlier save. Lets an admin "heal" an
+        # existing video that predates this feature just by opening its
+        # edit page and saving again, with nothing else needing to change.
+        item.image = _fetch_remote_poster(resolved_video_url) or item.image
     db.commit()
     return RedirectResponse(url="/gallery", status_code=303)
 
