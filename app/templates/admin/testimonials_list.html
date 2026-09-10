@@ -15,7 +15,7 @@
     <div class="item-icon"><i class="fas fa-quote-right"></i></div>
     <div class="item-body">
       <div class="item-title">{{ t.name }} <span style="color:var(--c-text-light); font-weight:400;">— {{ t.role }}</span></div>
-      <div class="item-meta">{{ t.quote[:90] }}{% if t.quote|length > 90 %}…{% endif %}</div>
+      <div class="item-meta"><span style="color:var(--c-gold);">{% for i in range(t.rating) %}<i class="fas fa-star"></i>{% endfor %}</span> {{ t.quote[:90] }}{% if t.quote|length > 90 %}…{% endif %}</div>
     </div>
     <span class="order-badge">#{{ t.order }}</span>
     <div class="item-actions">

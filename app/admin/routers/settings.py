@@ -57,7 +57,6 @@ def settings_form(request: Request, saved: bool = False, db: Session = Depends(g
 def update_settings(
     site_name: str = Form(...),
     site_url: str = Form(...),
-    tagline: str = Form(...),
     phone_display: str = Form(...),
     whatsapp_number: str = Form(...),
     email: str = Form(...),
@@ -74,7 +73,6 @@ def update_settings(
     row = _get_or_create(db)
     row.site_name = site_name
     row.site_url = site_url.rstrip("/")  # avoid a trailing "//" when other code appends a path
-    row.tagline = tagline
     row.phone_display = phone_display
     row.whatsapp_number = whatsapp_number
     row.email = email

@@ -256,6 +256,17 @@ class SiteSetting(Base):
     contact info, social links, branding text. Read everywhere on the
     public site via app/content.py:get_site_settings, which also supplies
     these same defaults if the row doesn't exist yet for some reason.
+
+    Used to also have a `tagline` column here, editable in the Settings
+    form — removed after a full site audit found it was never actually
+    read by any template (its seeded default was word-for-word identical
+    to the independent, still-editable `home.hero.eyebrow` Page Text
+    field, which is almost certainly what it got superseded by without
+    the now-dead Settings field being cleaned up at the time). Editing it
+    silently did nothing, which is worse than not having the field at
+    all. The column may still exist in an already-deployed Postgres
+    database — that's harmless; SQLAlchemy just never selects it once
+    it's gone from this model, and nothing needs to drop it.
     """
 
     __tablename__ = "site_settings"
@@ -263,7 +274,6 @@ class SiteSetting(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, default=1)
     site_name: Mapped[str] = mapped_column(String(200), default="GPS Ushering and Events")
     site_url: Mapped[str] = mapped_column(String(300), default="https://www.gpsusheringandevents.com")
-    tagline: Mapped[str] = mapped_column(String(300), default="Ushering & Event Support Services")
     phone_display: Mapped[str] = mapped_column(String(50), default="+233 24 000 0000")
     # Digits only, with country code, no "+" or spaces — used to build
     # wa.me/<number> WhatsApp links and tel: links throughout the site.

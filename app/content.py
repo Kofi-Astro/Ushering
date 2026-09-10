@@ -293,7 +293,6 @@ def get_site_settings() -> dict:
         return {
             "site_name": row.site_name,
             "site_url": row.site_url,
-            "tagline": row.tagline,
             "phone_display": row.phone_display,
             "whatsapp_number": row.whatsapp_number,
             "email": row.email,

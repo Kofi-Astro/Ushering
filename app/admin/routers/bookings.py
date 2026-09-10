@@ -140,12 +140,16 @@ def bookings_calendar(request: Request, year: int | None = None, month: int | No
 def update_status(booking_id: int, background_tasks: BackgroundTasks, status: str = Form(...), db: Session = Depends(get_db)):
     """Handles the per-booking status dropdown + Update button in
     admin/bookings.html. Silently does nothing if the id doesn't exist
-    (shouldn't happen in normal use, but no need to error over it) and
-    then always redirects back to the list either way. Only emails the
+    (shouldn't happen in normal use, but no need to error over it) — and
+    the same for a `status` that isn't one of the 5 real values, which
+    the <select>'s own fixed options never actually send, but a raw/
+    tampered request could; BookingStatus(status) would otherwise raise
+    a plain ValueError FastAPI doesn't turn into a friendly response.
+    Always redirects back to the list either way. Only emails the
     customer if the status is actually changing — editing the form and
     re-selecting the same status shouldn't re-notify them."""
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
-    if booking:
+    if booking and status in BookingStatus.__members__:
         new_status = BookingStatus(status)
         status_changed = new_status != booking.status
         booking.status = new_status
@@ -158,13 +162,18 @@ def update_status(booking_id: int, background_tasks: BackgroundTasks, status: st
 @router.get("/{booking_id}/edit")
 def edit_booking_form(booking_id: int, request: Request, db: Session = Depends(get_db)):
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        # A stale/bookmarked edit link (e.g. to an already-deleted
+        # booking) used to render a blank, broken form here — its own
+        # action attribute came out as "/bookings//edit" (booking.id
+        # rendering as empty), which 404s as raw JSON on submit instead
+        # of failing anywhere near as gracefully as this redirect does.
+        return RedirectResponse(url="/bookings", status_code=303)
     # Built from settings.site_url, not this request's own host — this
     # route is served on the admin subdomain, which is a different host
     # entirely from where /manage-booking/{token} actually lives.
-    manage_url = None
-    if booking:
-        site_url = get_site_settings()["site_url"].rstrip("/")
-        manage_url = f"{site_url}/manage-booking/{booking.manage_token}"
+    site_url = get_site_settings()["site_url"].rstrip("/")
+    manage_url = f"{site_url}/manage-booking/{booking.manage_token}"
     return templates.TemplateResponse(
         request,
         "admin/booking_form.html",
@@ -206,10 +215,16 @@ def update_booking(
     for the same "nothing here" meaning. Only emails the customer about
     the status specifically if it's actually changing here too (see
     update_status above) — editing, say, just the guest count shouldn't
-    also re-send a "your booking is confirmed" email."""
+    also re-send a "your booking is confirmed" email.
+
+    A `status` outside the 5 real values (never sent by the form's own
+    <select>, but BookingStatus(status) would otherwise raise a plain
+    ValueError FastAPI turns into a raw 500 for) falls back to leaving
+    the booking's current status untouched rather than rejecting the
+    whole save — every other field on this form is still worth keeping."""
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if booking:
-        new_status = BookingStatus(status)
+        new_status = BookingStatus(status) if status in BookingStatus.__members__ else booking.status
         status_changed = new_status != booking.status
         booking.name = name
         booking.phone = phone
