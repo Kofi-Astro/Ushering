@@ -877,6 +877,13 @@ section { padding: 90px 0; }
   margin-bottom: 22px;
   align-items: flex-start;
 }
+/* Flex items default to min-width:auto, which refuses to shrink below
+   an unbreakable string's full width — the email address has no spaces
+   or hyphens to wrap at, so without this the whole row (and everything
+   above it, up through .container) was forced wider than the viewport
+   on narrow screens, making the page horizontally scrollable by ~17px. */
+.contact-row > div { min-width: 0; }
+.contact-row a, .contact-row span.val { overflow-wrap: anywhere; }
 .contact-row i {
   width: 42px; height: 42px;
   border-radius: 50%;
@@ -972,6 +979,17 @@ section { padding: 90px 0; }
 }
 .form-success.show { display: block; }
 .form-success a { color: #2f5c26; text-decoration: underline; font-weight: 600; }
+.form-error {
+  display: none;
+  background: #fdf1f1;
+  border: 1px solid #e0b3b3;
+  color: #a13030;
+  padding: 16px 18px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 0.92rem;
+}
+.form-error.show { display: block; }
 
 /* ---------- CTA banner ---------- */
 .cta-banner {

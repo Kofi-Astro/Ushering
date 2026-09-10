@@ -261,20 +261,32 @@ document.addEventListener('DOMContentLoaded', () => {
     bookingForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const payload = Object.fromEntries(new FormData(bookingForm).entries());
+      const successBox = document.querySelector('.form-success');
+      const errorBox = document.querySelector('.form-error');
+      let ok = false;
       let manageUrl = null;
       try {
+        // fetch() only rejects on a genuine network failure — a 4xx/5xx
+        // response (e.g. a validation error) still resolves normally, so
+        // res.ok has to be checked explicitly. This used to be missed
+        // entirely: a rejected booking (bad phone number, etc.) still
+        // showed the success message and cleared the form, meaning the
+        // customer believed they'd booked when nothing was ever saved.
         const res = await fetch('/api/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        manageUrl = data.manage_url || null;
+        ok = res.ok;
+        if (ok) {
+          const data = await res.json();
+          manageUrl = data.manage_url || null;
+        }
       } catch (err) {
-        /* network hiccup — the success message below is optimistic either way */
+        ok = false;
       }
-      const successBox = document.querySelector('.form-success');
-      if (successBox) {
+
+      if (ok && successBox) {
         /* The message text itself is server-rendered from
            site_text['book_us.success_message'] (see
            templates/pages/book-us.html) and left alone here — only the
@@ -296,10 +308,18 @@ document.addEventListener('DOMContentLoaded', () => {
             linkSpan.append(' to view or change your booking later.');
           }
         }
+        if (errorBox) errorBox.classList.remove('show');
         successBox.classList.add('show');
         successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        bookingForm.reset();
+      } else if (errorBox) {
+        // Deliberately does NOT reset the form here — the customer's
+        // typed details stay in place so they can fix whatever was
+        // wrong (or just retry) without re-entering everything.
+        if (successBox) successBox.classList.remove('show');
+        errorBox.classList.add('show');
+        errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-      bookingForm.reset();
     });
   }
 

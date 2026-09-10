@@ -16,9 +16,11 @@ straight from the database — see app/content.py.
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.routing import Host
 
 from .admin import admin_app
@@ -104,3 +106,30 @@ def health():
     """Trivial liveness check — Railway (or any host) can hit this to
     confirm the process is up and responding."""
     return {"status": "ok"}
+
+
+@app.exception_handler(StarletteHTTPException)
+async def not_found_page(request: Request, exc: StarletteHTTPException):
+    """A bad/stale URL used to show FastAPI's bare default
+    `{"detail":"Not Found"}` JSON — jarring for a visitor who mistyped a
+    link or followed an outdated one. Every OTHER HTTP exception (a 422
+    from /api/bookings' validation, etc.) is untouched, falling straight
+    through to FastAPI's normal handling — this only replaces the 404
+    case, and only branded (styled, on-site navigation) rather than
+    changed in meaning. Registered on this app specifically, not
+    admin_app (see app/admin/__init__.py) — the admin panel is for the
+    one business owner, a plain 404 there is a non-issue."""
+    if exc.status_code == 404:
+        return pages.templates.TemplateResponse(
+            request,
+            "pages/404.html",
+            pages.base_context(
+                request,
+                nav=None,
+                title="Page Not Found | GPS Ushering and Events",
+                description="The page you're looking for doesn't exist.",
+                robots="noindex, nofollow",
+            ),
+            status_code=404,
+        )
+    return await http_exception_handler(request, exc)

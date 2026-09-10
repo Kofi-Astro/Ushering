@@ -170,6 +170,7 @@ GROUPS: dict[str, TextGroup] = {
             TextField("book_us.hero.eyebrow", "Hero eyebrow", "Book Us"),
             TextField("book_us.hero.title", "Hero heading", "Let's Plan Your Event Together"),
             TextField("book_us.success_message", "Form success message", "Thank you! Your booking request has been received. We'll be in touch shortly.", long=True),
+            TextField("book_us.error_message", "Form error message (shown if a submission fails)", "Something went wrong sending your booking. Please check your details and try again, or reach out to us directly on WhatsApp or by phone.", long=True),
             TextField("book_us.form.title", "Form card heading", "Request a Booking"),
             TextField("book_us.form.intro", "Form card intro", "Fill in your event details below and our team will get back to you within 24 hours.", long=True),
             TextField("book_us.form.location_placeholder", "Location field placeholder", "Venue and city/town"),

@@ -67,10 +67,16 @@ def update_own_booking(
 ):
     """Silently does nothing if the token doesn't match a booking, or if
     that booking is no longer editable (status moved past EDITABLE_STATUSES
-    since the page was loaded) — always redirects back to the same page
-    either way, which will show the current, real state either way."""
+    since the page was loaded — e.g. the business confirmed it while the
+    customer had this page open) — but the redirect below only adds
+    `?saved=1` when a save actually happened. It used to always add it,
+    which meant a rejected edit on a since-confirmed booking showed "Your
+    booking has been updated" directly above a "This Booking Is Already
+    Confirmed" read-only view of the (unchanged) details in the same
+    page — true in one sentence, contradicted by the next."""
     booking = db.query(Booking).filter(Booking.manage_token == token).first()
-    if booking and booking.status in EDITABLE_STATUSES:
+    saved = bool(booking and booking.status in EDITABLE_STATUSES)
+    if saved:
         booking.name = name
         booking.phone = phone
         booking.email = email
@@ -98,4 +104,5 @@ def update_own_booking(
             manage_url,
         )
 
-    return RedirectResponse(url=f"/manage-booking/{token}?saved=1", status_code=303)
+    redirect_url = f"/manage-booking/{token}?saved=1" if saved else f"/manage-booking/{token}"
+    return RedirectResponse(url=redirect_url, status_code=303)
