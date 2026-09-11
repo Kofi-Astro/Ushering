@@ -115,3 +115,56 @@ def delete_video(key: str) -> None:
         _client().delete_object(Bucket=settings.bucket_name, Key=key)
     except Exception as exc:
         print(f"[storage] Failed to delete {key!r}: {exc}", flush=True)
+
+
+# ---------------------------------------------------------------------
+# Generic object storage — used by app/backup.py for database backups,
+# which have nothing to do with video specifically. Kept in this module
+# anyway rather than a separate one, since it's the same bucket and the
+# same boto3 client either way.
+# ---------------------------------------------------------------------
+
+
+def upload_bytes(key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
+    """Uploads raw bytes to the bucket under `key`, straight from this
+    server — unlike the video upload path, a database backup is small
+    enough (and generated server-side, not by a visitor's browser) that
+    there's no reason to bother with a presigned direct-upload dance."""
+    settings = get_settings()
+    _client().put_object(Bucket=settings.bucket_name, Key=key, Body=data, ContentType=content_type)
+
+
+def download_bytes(key: str) -> bytes:
+    """Downloads an object's raw bytes — used to fetch a backup file back
+    for a manual restore (see app/backup.py:restore_from_backup)."""
+    settings = get_settings()
+    response = _client().get_object(Bucket=settings.bucket_name, Key=key)
+    return response["Body"].read()
+
+
+def list_keys(prefix: str) -> list[str]:
+    """Every object key under `prefix`, oldest-to-newest by key name (the
+    backup filenames are timestamp-sorted, so this is also chronological)
+    — used to find backups to restore from or prune. Paginates internally
+    since a bucket listing caps at 1000 keys per request, though nothing
+    here is expected to ever approach that many backups."""
+    settings = get_settings()
+    keys: list[str] = []
+    continuation_token = None
+    while True:
+        kwargs = {"Bucket": settings.bucket_name, "Prefix": prefix}
+        if continuation_token:
+            kwargs["ContinuationToken"] = continuation_token
+        response = _client().list_objects_v2(**kwargs)
+        keys.extend(obj["Key"] for obj in response.get("Contents", []))
+        if not response.get("IsTruncated"):
+            break
+        continuation_token = response.get("NextContinuationToken")
+    return sorted(keys)
+
+
+def delete_key(key: str) -> None:
+    """Removes a single object — used to prune old backups beyond the
+    retention window (see app/backup.py)."""
+    settings = get_settings()
+    _client().delete_object(Bucket=settings.bucket_name, Key=key)

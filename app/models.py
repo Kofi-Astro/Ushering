@@ -223,6 +223,26 @@ class TeamPhoto(Base):
     order: Mapped[int] = mapped_column(Integer, default=1)
 
 
+class PageView(Base):
+    """One page view, logged by a lightweight middleware (see
+    app/main.py and app/analytics.py) for successful (2xx) GET requests
+    to real pages only — static assets, the booking API, health checks,
+    and known bot/crawler traffic are all filtered out before this ever
+    gets written. Deliberately minimal: no IP address, no cookie, no
+    full user-agent string kept — just enough to show the business owner
+    which pages get visited and roughly how much mobile vs desktop
+    traffic there is (see the admin Analytics section), without tracking
+    individual visitors across sessions or pages."""
+
+    __tablename__ = "page_views"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    path: Mapped[str] = mapped_column(String(300), index=True)
+    referrer: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    is_mobile: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
 class AdminAuth(Base):
     """Single-row table (id is always 1) holding whatever's needed for the
     admin password-reset flow — see app/security.py and

@@ -185,3 +185,24 @@ Message:
 Log in to the admin panel to review: {manage_url}
 """,
     )
+
+
+def send_error_alert(summary: str, request_path: str, traceback_text: str, recipient_email: str) -> None:
+    """Emails a developer (settings.error_alert_email — NOT the business
+    owner's own address, see app/config.py) the moment an unhandled
+    exception happens somewhere in the live app. Rate-limited per
+    distinct error by app/error_alerts.py, which is the only caller of
+    this — so a recurring bug sends one alert per cooldown window rather
+    than flooding the inbox on every single occurrence."""
+    _send(
+        subject=f"[GPS Ushering] Server error: {summary[:80]}",
+        recipient_email=recipient_email,
+        body=f"""An unhandled error just happened on the live site.
+
+URL: {request_path}
+Error: {summary}
+
+Traceback:
+{traceback_text}
+""",
+    )

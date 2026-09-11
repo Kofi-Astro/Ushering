@@ -14,15 +14,20 @@ There is no build step. Templates are rendered fresh on every request
 straight from the database — see app/content.py.
 """
 
+import asyncio
+import contextlib
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.routing import Host
 
+from . import analytics, backup, error_alerts
 from .admin import admin_app
 from .config import get_settings
 from .database import Base, SessionLocal, engine
@@ -48,7 +53,30 @@ with SessionLocal() as db:
     # through the admin panel. See app/seed.py for exactly what it adds.
     seed_if_empty(db)
 
-app = FastAPI(title="GPS Ushering and Events")
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Runs app/backup.py's run_backup() once at startup and then every
+    24 hours for as long as the process lives — see app/backup.py for why
+    this is a plain JSON-export-to-bucket rather than a native Postgres
+    dump (no pg_dump binary in the Railway container). Backups are a
+    blocking operation (DB reads + gzip + an S3 upload), so it runs in a
+    worker thread via asyncio.to_thread rather than on the event loop
+    itself, keeping the site responsive to real requests while a backup
+    is in progress."""
+
+    async def backup_loop():
+        while True:
+            await asyncio.to_thread(backup.run_backup)
+            await asyncio.sleep(backup.SCHEDULE_INTERVAL_SECONDS)
+
+    task = asyncio.create_task(backup_loop())
+    yield
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+
+
+app = FastAPI(title="GPS Ushering and Events", lifespan=lifespan)
 
 # Allows the booking form's fetch() call to work even if the public site
 # and this backend ever end up served from different origins. Not needed
@@ -99,6 +127,44 @@ app.include_router(manage_booking.router)
 # — otherwise a request to admin.<domain>/ could incorrectly match this
 # app's own "/" route instead of being handed to admin_app.
 app.router.routes.insert(0, Host(settings.admin_hostname, app=admin_app))
+
+
+def _log_page_view(path: str, referrer: str | None, user_agent: str) -> None:
+    with SessionLocal() as db:
+        analytics.log_view(db, path, referrer, user_agent)
+
+
+@app.middleware("http")
+async def page_view_logger(request: Request, call_next):
+    """Logs a PageView row (see app/models.py, app/analytics.py) for real,
+    successful page visits — see analytics.should_log for exactly what's
+    excluded (static assets, the booking API, bots). The DB write happens
+    via the response's background task, after the response is already on
+    its way to the visitor, so this never adds latency to the page they're
+    waiting on."""
+    response = await call_next(request)
+    user_agent = request.headers.get("user-agent", "")
+    if analytics.should_log(request.url.path, request.method, response.status_code, user_agent):
+        response.background = BackgroundTask(
+            _log_page_view, request.url.path, request.headers.get("referer"), user_agent
+        )
+    return response
+
+
+@app.exception_handler(Exception)
+async def unhandled_error_alert(request: Request, exc: Exception):
+    """Emails a developer (see app/error_alerts.py) the moment a genuine
+    unhandled bug reaches the public site. Only ever reached for actual
+    bugs — HTTPException-based responses (the 404 handler below, /api
+    validation errors, etc.) are handled separately by Starlette before
+    this is ever consulted. The alert is sent via the response's
+    background task rather than awaited here, so a slow SMTP server never
+    delays the error response a visitor is already looking at."""
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error"},
+        background=BackgroundTask(error_alerts.maybe_send_alert, request, exc),
+    )
 
 
 @app.get("/health")

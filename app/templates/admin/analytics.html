@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="section-toolbar">
+  <h2>Analytics</h2>
+</div>
+<p class="empty" style="padding: 0 0 20px; text-align:left;">Page views only — no cookies, no IP addresses, no tracking of who visited more than once. Bots and crawlers are filtered out.</p>
+
+<div class="stat-tiles">
+  <div class="stat-tile">
+    <div class="stat-tile-num">{{ count_today }}</div>
+    <div class="stat-tile-label">Views Today</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-tile-num">{{ count_7d }}</div>
+    <div class="stat-tile-label">Last 7 Days</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-tile-num">{{ count_30d }}</div>
+    <div class="stat-tile-label">Last 30 Days</div>
+  </div>
+  <div class="stat-tile">
+    <div class="stat-tile-num">{{ mobile_pct }}%</div>
+    <div class="stat-tile-label">Mobile (30d)</div>
+  </div>
+</div>
+
+<div class="section-toolbar" style="margin-top:36px;">
+  <h2 style="font-size:1.2rem;">Last 14 Days</h2>
+</div>
+{% if daily_counts|length == 0 or max_daily == 0 %}
+<p class="empty">No page views recorded yet.</p>
+{% else %}
+<div class="daily-chart">
+  {% for day in daily_counts %}
+  <div class="daily-bar-col">
+    <div class="daily-bar" style="height: {{ (day.count / max_daily * 100) if max_daily else 0 }}%;" title="{{ day.date }}: {{ day.count }} views"></div>
+    <div class="daily-bar-label">{{ day.date }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="analytics-columns">
+  <div>
+    <div class="section-toolbar" style="margin-top:36px;">
+      <h2 style="font-size:1.2rem;">Top Pages (30d)</h2>
+    </div>
+    {% if top_pages|length == 0 %}
+    <p class="empty">No page views recorded yet.</p>
+    {% else %}
+    <div class="item-list">
+      {% for p in top_pages %}
+      <div class="item-row">
+        <div class="item-body">
+          <div class="item-title">{{ p.path }}</div>
+        </div>
+        <span class="order-badge">{{ p.views }} view{{ 's' if p.views != 1 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div>
+    <div class="section-toolbar" style="margin-top:36px;">
+      <h2 style="font-size:1.2rem;">Top Referrers (30d)</h2>
+    </div>
+    {% if top_referrers|length == 0 %}
+    <p class="empty">No referrers recorded yet — visits so far came directly (no referring page).</p>
+    {% else %}
+    <div class="item-list">
+      {% for r in top_referrers %}
+      <div class="item-row">
+        <div class="item-body">
+          <div class="item-title" style="word-break:break-all;">{{ r.referrer }}</div>
+        </div>
+        <span class="order-badge">{{ r.views }} view{{ 's' if r.views != 1 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

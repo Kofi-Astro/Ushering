@@ -81,6 +81,15 @@ class Settings(BaseSettings):
     bucket_name: str = ""
     bucket_region: str = "auto"
 
+    # Where app/error_alerts.py emails a developer the moment an
+    # unhandled exception happens in production — deliberately separate
+    # from site_settings.email (the business owner's own address, used
+    # for booking notifications etc.), since a stack trace isn't
+    # actionable for her the way it is for whoever maintains the code.
+    # Left blank by default: error_alerts.py silently does nothing
+    # without it, same "off until configured" pattern as SMTP/the bucket.
+    error_alert_email: str = ""
+
     @property
     def allowed_origins(self) -> list[str]:
         """Turns the raw FRONTEND_ORIGINS env var into the list shape
